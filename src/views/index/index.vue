@@ -1,17 +1,18 @@
 <script lang="ts" setup>
 import { ref, computed, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
 import { api } from '@/api/api'
 import { MessagePlugin } from 'tdesign-vue-next'
 import type { Project } from './types'
+import { useChat } from './hooks/useChat'
+import chatView from './chats/index.vue'
 
-const router = useRouter()
 const projects = ref<Project[]>([])
 const loading = ref(false)
 const searchValue = ref('')
 const activeProjects = ref<string[]>([])
-const selectedSessionId = ref<string>()
 const sortBy = ref<'recent' | 'name'>('recent')
+
+const { selectedProject, selectedSessionId, getMessages, rawMessages } = useChat()
 
 const getProjects = async () => {
   loading.value = true
@@ -47,6 +48,8 @@ const formatLastActivity = (dateStr: string) => {
 
 const handleSessionClick = (project: Project, sessionId: string) => {
   selectedSessionId.value = sessionId
+  selectedProject.value = project
+  getMessages()
   console.log('project', project)
 }
 
@@ -125,7 +128,7 @@ onMounted(() => {
                       {{ project.displayName || project.name }}
                     </div>
                     <div class="project_meta">
-                      <t-tag v-if="project.sessionMeta?.total" theme="primary" size="small" variant="light"> {{ project.sessionMeta.total }}个会话 </t-tag>
+                      <t-tag v-if="project.sessionMeta?.total" size="small" variant="light"> {{ project.sessionMeta.total }}个会话 </t-tag>
                       <span v-if="project.sessions?.length > 0" class="last_activity">
                         {{ formatLastActivity(project.sessions[0].lastActivity) }}
                       </span>
@@ -168,11 +171,12 @@ onMounted(() => {
 
     <!-- 右侧内容区 -->
     <div class="right">
-      <div class="welcome_container">
+      <div class="welcome_container" v-if="!rawMessages?.length">
         <t-empty status="info" title="欢迎使用 Claude Code Web">
           <p class="welcome_text">请从左侧选择一个会话开始</p>
         </t-empty>
       </div>
+      <chatView v-else />
     </div>
   </div>
 </template>
@@ -180,9 +184,9 @@ onMounted(() => {
 <style lang="scss" scoped>
 .index_container {
   height: 100%;
-  background-color: var(--td-bg-color-container);
   display: flex;
-  gap: 0;
+  gap: 12px;
+  padding: 12px;
 
   .left {
     width: 320px;
@@ -364,7 +368,7 @@ onMounted(() => {
     flex: 1;
     height: 100%;
     overflow-y: auto;
-    background-color: var(--td-bg-color-page);
+    background-color: var(--td-bg-color-container);
 
     .welcome_container {
       display: flex;
