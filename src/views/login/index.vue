@@ -56,7 +56,7 @@ const loginFn = async () => {
 // 开发环境下默认填入账号密码
 if (isDev) {
   formData.value.username = 'admin'
-  formData.value.password = 'admin123'
+  formData.value.password = '123456'
 }
 </script>
 

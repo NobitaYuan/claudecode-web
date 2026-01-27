@@ -7,7 +7,7 @@ import router from '@/router/index'
 NProgress.configure({ showSpinner: false })
 
 // 白名单
-const whiteListRouters = ['/login', '/index']
+const whiteListRouters = ['/login', ]
 
 // 路由守卫--前置
 router.beforeEach(async (to, from, next) => {

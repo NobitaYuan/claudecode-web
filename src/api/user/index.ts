@@ -2,24 +2,8 @@ import request from '@/utils/request'
 
 // 用户信息
 export interface userInfo {
-  isDefaultModifyPwd: boolean
-  isPasswordExpired: boolean
-  permissions: string[]
-  roles: string[]
-  user: {
-    avatar: string
-    createBy: string
-    createTime: string
-    dept: unknown
-    roles: unknown
-    roleIds: string
-    postIds: string
-    roleId: string
-    admin: boolean
-    nickName: string
-    sex: string
-    userId: string
-  }
+  id: string
+  username: string
 }
 
 // 登录参数

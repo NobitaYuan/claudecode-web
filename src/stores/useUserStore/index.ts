@@ -1,15 +1,12 @@
 import { defineStore } from 'pinia'
 import { getToken, userInfoKey, userTokenKey } from '@/utils/localStorage/token'
 import { clearLocal, getFromLocal } from '@/utils'
-import { getUserInfo, login, loginParams, userInfo } from '@/api/user'
+import { loginParams, userInfo } from '@/api/user'
+import { api } from '@/api/api'
 
 const InitUserInfo: userInfo = {
-  isDefaultModifyPwd: false,
-  isPasswordExpired: false,
-  permissions: [],
-  roles: [],
-  // @ts-ignore
-  user: {},
+  id: '',
+  username: '',
 }
 
 // 用户信息store
@@ -21,7 +18,7 @@ export const useUserStore = defineStore('userStore', {
   }),
   getters: {
     userName(state) {
-      return state.info?.user?.nickName || ''
+      return state.info?.username
     },
     userToken(state) {
       return state.token
@@ -32,14 +29,21 @@ export const useUserStore = defineStore('userStore', {
   },
   actions: {
     async login(params: loginParams) {
-      const res = await login(params)
-      this.token = res.data.token
-      return res
+      const res = await api.auth.login(params.username, params.password)
+      const data = await res.json()
+      this.token = data.token
+      this.info = data.user
+      return data
     },
     async getUserInfo() {
-      const res = await getUserInfo()
-      this.info = res.data
-      this.hasUserInfo = true
+      const res = await api.get('/taskmaster/installation-status')
+      if (res.ok) {
+        const data = await res.json()
+        console.log('installation-status：', data)
+        this.hasUserInfo = true
+      } else {
+        this.logout()
+      }
       return res
     },
     logout(reload: boolean = false) {

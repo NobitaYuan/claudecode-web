@@ -15,7 +15,7 @@ export default defineConfig((env: ConfigEnv) => {
   // 环境变量
   const { VITE_APP_TITLE, VITE_APP_BASE_API_URL } = envVar
   const IP = {
-    test: 'http://120.53.11.108:8999',
+    dev: `http://localhost:3001`,
   }
   return {
     plugins: [
@@ -58,13 +58,22 @@ export default defineConfig((env: ConfigEnv) => {
     server: {
       host: true,
       proxy: {
+        /* /api */
         [VITE_APP_BASE_API_URL]: {
-          target: IP.test,
+          target: IP.dev,
           configure: (proxy, options) => {
             proxy.on('proxyReq', (proxyReq, req) => {
               console.log(`[Proxy Url] ${req.method} ${req.url} -> ${options.target}${req.url}`)
             })
           },
+        },
+        '/ws': {
+          target: `ws://localhost:${3001}`,
+          ws: true,
+        },
+        '/shell': {
+          target: `ws://localhost:${3001}`,
+          ws: true,
         },
       },
     },

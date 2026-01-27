@@ -1,4 +1,4 @@
-export const userTokenKey = 'userToken'
+export const userTokenKey = 'auth-token'
 
 export const userInfoKey = 'userInfo'
 
