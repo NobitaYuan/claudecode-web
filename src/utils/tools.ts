@@ -129,3 +129,22 @@ export const numToFixed = (num: number, fixedNum: number = 2) => {
   if (typeof num !== 'number') return num
   return Number(num.toFixed(fixedNum))
 }
+
+/**
+ * 格式化最后活动时间
+ * @param dateStr 时间字符串
+ * @returns 格式化后的时间字符串
+ */
+export const formatLastActivity = (dateStr: string) => {
+  const date = new Date(dateStr)
+  const now = new Date()
+  const diff = now.getTime() - date.getTime()
+  const minutes = Math.floor(diff / 60000)
+  const hours = Math.floor(diff / 3600000)
+  const days = Math.floor(diff / 86400000)
+
+  if (minutes < 1) return '刚刚'
+  if (minutes < 60) return `${minutes}分钟前`
+  if (hours < 24) return `${hours}小时前`
+  return `${days}天前`
+}

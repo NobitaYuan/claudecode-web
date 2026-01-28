@@ -1,92 +1,21 @@
 <script lang="ts" setup>
-import { ref, computed, onMounted } from 'vue'
-import { api } from '@/api/api'
-import { MessagePlugin } from 'tdesign-vue-next'
-import type { Project } from './types'
 import { useChat } from './hooks/useChat'
 import chatView from './chats/index.vue'
+import { useWebSocket } from './hooks/useWebSocket'
+import { formatLastActivity } from '@/utils/tools'
+import { useWebSocketMessageHandler } from './hooks/useWebSocketMessageHandler'
 
-const projects = ref<Project[]>([])
-const loading = ref(false)
-const searchValue = ref('')
 const activeProjects = ref<string[]>([])
-const sortBy = ref<'recent' | 'name'>('recent')
 
-const { selectedProject, selectedSessionId, getMessages, rawMessages } = useChat()
+const { filteredProjects, getProjects, searchValue, projectLoading, sortBy, selectedProject, selectedSession, rawMessages, handleSessionClick } = useChat()
 
-const getProjects = async () => {
-  loading.value = true
-  try {
-    const res = await api.projects()
-    if (!res.ok) {
-      return MessagePlugin.error(res.statusText)
-    }
-    const data = await res.json()
-    projects.value = Array.isArray(data) ? data : []
-    console.log('projects.value', projects.value)
-  } catch (error) {
-    MessagePlugin.error('获取项目列表失败')
-    console.error(error)
-  } finally {
-    loading.value = false
-  }
-}
+const { connect } = useWebSocket()
 
-const formatLastActivity = (dateStr: string) => {
-  const date = new Date(dateStr)
-  const now = new Date()
-  const diff = now.getTime() - date.getTime()
-  const minutes = Math.floor(diff / 60000)
-  const hours = Math.floor(diff / 3600000)
-  const days = Math.floor(diff / 86400000)
+useWebSocketMessageHandler()
 
-  if (minutes < 1) return '刚刚'
-  if (minutes < 60) return `${minutes}分钟前`
-  if (hours < 24) return `${hours}小时前`
-  return `${days}天前`
-}
-
-const handleSessionClick = (project: Project, sessionId: string) => {
-  selectedSessionId.value = sessionId
-  selectedProject.value = project
-  getMessages()
-  console.log('project', project)
-}
-
-const filteredProjects = computed(() => {
-  let result = projects.value
-
-  // 搜索过滤
-  if (searchValue.value) {
-    const keyword = searchValue.value.toLowerCase()
-    result = result.filter((project) => {
-      const matchProject =
-        project.displayName?.toLowerCase().includes(keyword) || project.name?.toLowerCase().includes(keyword) || project.path?.toLowerCase().includes(keyword)
-
-      const matchSessions = project.sessions?.some((session) => session.summary?.toLowerCase().includes(keyword))
-
-      return matchProject || matchSessions
-    })
-  }
-
-  // 排序
-  if (sortBy.value === 'recent') {
-    result = [...result].sort((a, b) => {
-      const aTime = a.sessions?.[0]?.lastActivity ? new Date(a.sessions[0].lastActivity).getTime() : 0
-      const bTime = b.sessions?.[0]?.lastActivity ? new Date(b.sessions[0].lastActivity).getTime() : 0
-      return bTime - aTime
-    })
-  } else if (sortBy.value === 'name') {
-    result = [...result].sort((a, b) => {
-      return (a.displayName || a.name).localeCompare(b.displayName || b.name)
-    })
-  }
-
-  return result
-})
-
-onMounted(() => {
-  getProjects()
+onMounted(async () => {
+  await getProjects()
+  await connect()
 })
 </script>
 
@@ -108,7 +37,7 @@ onMounted(() => {
         </t-radio-group>
       </div>
 
-      <div v-if="loading" class="loading_container">
+      <div v-if="projectLoading" class="loading_container">
         <t-loading size="small" />
       </div>
 
@@ -118,7 +47,13 @@ onMounted(() => {
 
       <div v-else class="projects_list">
         <t-collapse v-model="activeProjects" expandMutex :borderless="true" class="projects_collapse">
-          <t-collapse-panel v-for="project in filteredProjects" :key="project.name" :value="project.name" class="project_panel">
+          <t-collapse-panel
+            v-for="project in filteredProjects"
+            :key="project.name"
+            :value="project.name"
+            class="project_panel"
+            :class="{ active: project.name === selectedProject?.name }"
+          >
             <template #header>
               <div class="project_header">
                 <div class="project_header_left">
@@ -144,8 +79,8 @@ onMounted(() => {
                   v-for="session in project.sessions"
                   :key="session.id"
                   class="session_item"
-                  :class="{ active: session.id === selectedSessionId }"
-                  @click="handleSessionClick(project, session.id)"
+                  :class="{ active: session.id === selectedSession?.id }"
+                  @click="handleSessionClick(project, session)"
                 >
                   <div class="session_header">
                     <div class="session_summary">
@@ -249,14 +184,15 @@ onMounted(() => {
         :deep(.t-collapse-panel__body) {
           padding: 0;
           .t-collapse-panel__content {
-            padding: 4px 16px;
-            padding-left: 30px;
+            padding: 4px 0px 4px 30px;
           }
         }
 
         .project_panel {
           margin-bottom: 0;
-
+          &.active {
+            background-color: var(--td-brand-color-1);
+          }
           .project_header {
             flex: 1;
             display: flex;
@@ -335,7 +271,7 @@ onMounted(() => {
 
               .session_summary {
                 flex: 1;
-                font-size: 13px;
+                font-size: 12px;
                 color: var(--td-text-color-primary);
                 overflow: hidden;
                 text-overflow: ellipsis;
@@ -344,6 +280,7 @@ onMounted(() => {
                 // -webkit-box-orient: vertical;
                 white-space: nowrap;
                 margin-bottom: 4px;
+                font-weight: bold;
               }
             }
 

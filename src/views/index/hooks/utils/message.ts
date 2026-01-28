@@ -125,7 +125,7 @@ export interface Message {
   /** 消息类型 */
   type: BaseMessage['type']
   /** 消息时间戳 */
-  timestamp: string
+  timestamp: string | Date
 
   // === 用户消息字段 ===
   /** 用户输入的文本内容 */
@@ -137,11 +137,11 @@ export interface Message {
   }>
 
   // === AI 助手消息字段 ===
-  /** 可选：思考过程（某些模型提供的推理过程） */
+  /** 思考过程（某些模型提供的推理过程） */
   reasoning?: string
-  /** 可选：标记为思考中消息 */
+  /** 标记为思考中消息 */
   isThinking?: true
-  /** 可选：标记为工具调用 */
+  /** 标记为工具调用 */
   isToolUse?: true
   /** 工具名称 */
   toolName?: string
@@ -149,15 +149,15 @@ export interface Message {
   toolInput?: string
   /** 工具调用 ID */
   toolId?: string
-  /** 可选：工具调用 ID（Codex 使用） */
+  /** 工具调用 ID（Codex 使用） */
   toolCallId?: string
-  /** 可选：工具执行结果 */
+  /** 工具执行结果 */
   toolResult?: ToolResult
-  /** 可选：工具是否出错 */
+  /** 工具是否出错 */
   toolError?: boolean
-  /** 可选：工具结果时间戳 */
+  /** 工具结果时间戳 */
   toolResultTimestamp?: Date
-  /** 可选：标记为交互式提示 */
+  /** 标记为交互式提示 */
   isInteractivePrompt?: true
 }
 

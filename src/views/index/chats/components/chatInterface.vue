@@ -3,7 +3,6 @@ import { DiffLine, Message, PermissionSuggestion, Provider, ToolUseMessage } fro
 import { Project } from '../../types'
 import ClaudeLogo from './ClaudeLogo.vue'
 
-// TODO: 这些组件需要后续实现，先用占位符
 import { MessageResponse } from '@/components/ai-elements/message'
 
 // ========================================================
@@ -42,9 +41,9 @@ const props = withDefaults(defineProps<IProps>(), {
   onFileOpen: null,
   onShowSettings: null,
   onGrantToolPermission: null,
-  autoExpandTools: false,
+  autoExpandTools: true,
   showRawParameters: false,
-  showThinking: false,
+  showThinking: true,
   selectedProject: null,
   provider: 'claude',
 })
@@ -225,10 +224,46 @@ const interactivePromptOptions = computed(() => {
 
 // 格式化内容
 const formattedContent = computed(() => {
-  const content = String(props.message.content || '')
-  // TODO: 实现 formatUsageLimitText 逻辑
-  console.log('content', content)
-  return content
+  const text = String(props.message.content || '')
+  try {
+    if (typeof text !== 'string') return text
+    return text.replace(/Claude AI usage limit reached\|(\d{10,13})/g, (match, ts) => {
+      let timestampMs = parseInt(ts, 10)
+      if (!Number.isFinite(timestampMs)) return match
+      if (timestampMs < 1e12) timestampMs *= 1000 // seconds → ms
+      const reset = new Date(timestampMs)
+
+      // Time HH:mm in local time
+      const timeStr = new Intl.DateTimeFormat(undefined, {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false,
+      }).format(reset)
+
+      // Human-readable timezone: GMT±HH[:MM] (City)
+      const offsetMinutesLocal = -reset.getTimezoneOffset()
+      const sign = offsetMinutesLocal >= 0 ? '+' : '-'
+      const abs = Math.abs(offsetMinutesLocal)
+      const offH = Math.floor(abs / 60)
+      const offM = abs % 60
+      const gmt = `GMT${sign}${offH}${offM ? ':' + String(offM).padStart(2, '0') : ''}`
+      const tzId = Intl.DateTimeFormat().resolvedOptions().timeZone || ''
+      const cityRaw = tzId.split('/').pop() || ''
+      const city = cityRaw
+        .replace(/_/g, ' ')
+        .toLowerCase()
+        .replace(/\b\w/g, (c) => c.toUpperCase())
+      const tzHuman = city ? `${gmt} (${city})` : gmt
+
+      // Readable date like "8 Jun 2025"
+      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+      const dateReadable = `${reset.getDate()} ${months[reset.getMonth()]} ${reset.getFullYear()}`
+
+      return `Claude usage limit reached. Your limit will reset at **${timeStr} ${tzHuman}** - ${dateReadable}`
+    })
+  } catch {
+    return text
+  }
 })
 
 // 判断是否是 JSON 内容
@@ -277,14 +312,12 @@ function getMessageTypeLabel() {
 // 处理 Edit 文件打开
 async function handleEditFileOpen(filePath: string) {
   if (!props.onFileOpen) return
-  // TODO: 实现文件 diff 逻辑
   props.onFileOpen(filePath)
 }
 
 // 处理 Write 文件打开
 async function handleWriteFileOpen(filePath: string) {
   if (!props.onFileOpen) return
-  // TODO: 实现文件 diff 逻辑
   props.onFileOpen(filePath, {
     old_string: '',
     new_string: parsedWriteInput.value?.content || '',
@@ -315,9 +348,9 @@ const openImg = (img: string) => {
     <!-- ========================================================
          分支1: 这里是用户消息渲染分支 (右侧蓝色气泡)
          ======================================================== -->
-    <div v-if="message.type === 'user'" class="flex items-end space-x-0 sm:space-x-3 w-full sm:w-auto sm:max-w-[85%] md:max-w-md lg:max-w-lg xl:max-w-xl">
+    <div v-if="message.type === 'user'" class="flex justify-end items-end space-x-0 sm:space-x-3">
       <!-- 用户消息气泡 -->
-      <div class="bg-blue-600 text-white rounded-2xl rounded-br-md px-3 sm:px-4 py-2 shadow-sm flex-1 sm:flex-initial">
+      <div class="bg-blue-600 text-white rounded-2xl rounded-br-md px-3 sm:px-4 py-2 shadow-sm max-w-[80%]">
         <!-- 消息文本内容 -->
         <div class="text-sm whitespace-pre-wrap break-words">
           {{ message.content }}
@@ -336,7 +369,7 @@ const openImg = (img: string) => {
         </div>
 
         <!-- 时间戳 -->
-        <div class="text-xs text-blue-100 mt-1 text-right">
+        <div class="text-xs text-blue-100 mt-2 text-right">
           {{ formatTime(message.timestamp) }}
         </div>
       </div>
@@ -401,9 +434,9 @@ const openImg = (img: string) => {
                 <!-- 搜索参数 -->
                 <span v-if="message.toolInput" class="font-mono truncate flex-1 min-w-0">
                   <span v-if="parsedToolInput.pattern">
-                    {{ $t('search.pattern') }} <span class="text-blue-600 dark:text-blue-400">{{ parsedToolInput.pattern }}</span>
+                    模式<span class="text-blue-600 dark:text-blue-400">{{ parsedToolInput.pattern }}</span>
                   </span>
-                  <span v-if="parsedToolInput.path" class="ml-2">{{ $t('search.in') }} {{ parsedToolInput.path }}</span>
+                  <span v-if="parsedToolInput.path" class="ml-2">在： {{ parsedToolInput.path }}</span>
                 </span>
               </div>
               <!-- 搜索结果链接 -->
@@ -412,7 +445,7 @@ const openImg = (img: string) => {
                 :href="`#tool-result-${message.toolId}`"
                 class="flex-shrink-0 text-xs text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium transition-colors flex items-center gap-1"
               >
-                <span>{{ $t('tools.searchResults') }}</span>
+                <span>搜索结果：</span>
                 <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                 </svg>
@@ -428,9 +461,9 @@ const openImg = (img: string) => {
             class="group relative bg-gradient-to-br from-blue-50/50 to-indigo-50/50 dark:from-blue-950/20 dark:to-indigo-950/20 border border-blue-100/30 dark:border-blue-800/30 rounded-lg p-3 mb-2"
           >
             <!-- 装饰性渐变覆盖层 -->
-            <div
-              class="absolute inset-0 bg-gradient-to-br from-blue-500/3 to-indigo-500/3 dark:from-blue-400/3 dark:to-indigo-400/3 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-            ></div>
+            <!-- <div
+              class="absolute inset-0 bg-gradient-to-br from-blue-500/3 to-indigo-500/3 dark:from-blue-400/3 dark:to-indigo-400/3 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"
+            ></div> -->
 
             <!-- 工具信息头部 -->
             <div class="relative flex items-center justify-between mb-3">
@@ -456,9 +489,9 @@ const openImg = (img: string) => {
                   <span class="font-semibold text-gray-900 dark:text-white text-sm">
                     {{ message.toolName }}
                   </span>
-                  <span class="text-xs text-gray-500 dark:text-gray-400 font-mono">
+                  <!-- <span class="text-xs text-gray-500 dark:text-gray-400 font-mono">
                     {{ message.toolId }}
-                  </span>
+                  </span> -->
                 </div>
               </div>
               <!-- 设置按钮 -->
@@ -466,7 +499,7 @@ const openImg = (img: string) => {
                 v-if="onShowSettings"
                 @click.stop="onShowSettings"
                 class="p-2 rounded-lg hover:bg-white/60 dark:hover:bg-gray-800/60 transition-all duration-200 group/btn backdrop-blur-sm"
-                :title="$t('tools.settings')"
+                title="设置"
               >
                 <svg
                   class="w-4 h-4 text-gray-600 dark:text-gray-400 group-hover/btn:text-blue-600 dark:group-hover/btn:text-blue-400 transition-colors"
@@ -555,7 +588,7 @@ const openImg = (img: string) => {
                       <svg class="w-3 h-3 transition-transform duration-200 group-open/raw:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                       </svg>
-                      View raw parameters
+                      查看原始参数
                     </summary>
                     <pre
                       class="mt-2 text-xs bg-gray-50 dark:bg-gray-800/50 border border-gray-200/60 dark:border-gray-700/60 p-3 rounded-lg whitespace-pre-wrap break-words overflow-hidden text-gray-700 dark:text-gray-300 font-mono"
@@ -580,7 +613,7 @@ const openImg = (img: string) => {
                   </svg>
                   <span class="flex items-center gap-2">
                     <span class="text-lg leading-none">📄</span>
-                    <span>Creating new file:</span>
+                    <span>创建新文件:</span>
                   </span>
                   <button
                     @click.prevent.stop="handleWriteFileOpen(parsedWriteInput.file_path)"
@@ -603,7 +636,7 @@ const openImg = (img: string) => {
                       <span
                         class="text-xs text-gray-500 dark:text-gray-400 font-medium px-2 py-0.5 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 rounded"
                       >
-                        New File
+                        新文件
                       </span>
                     </div>
                     <!-- Diff 显示 -->
@@ -611,7 +644,7 @@ const openImg = (img: string) => {
                       <div v-for="(diffLine, i) in writeDiffLines" :key="i" class="flex">
                         <span
                           :class="[
-                            'w-8 text-center border-r',
+                            'w-8 text-center border-r select-none',
                             diffLine.type === 'removed'
                               ? 'bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 border-red-200 dark:border-red-800'
                               : 'bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 border-green-200 dark:border-green-800',
@@ -640,7 +673,7 @@ const openImg = (img: string) => {
                       <svg class="w-3 h-3 transition-transform duration-200 group-open/raw:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                       </svg>
-                      View raw parameters
+                      查看原始参数
                     </summary>
                     <pre
                       class="mt-2 text-xs bg-gray-50 dark:bg-gray-800/50 border border-gray-200/60 dark:border-gray-700/60 p-3 rounded-lg whitespace-pre-wrap break-words overflow-hidden text-gray-700 dark:text-gray-300 font-mono"
@@ -665,7 +698,7 @@ const openImg = (img: string) => {
                   </svg>
                   <span class="flex items-center gap-2">
                     <span class="text-lg leading-none">✓</span>
-                    <span>Updating Todo List</span>
+                    <span>更新待办列表</span>
                   </span>
                 </summary>
                 <div class="mt-3">
@@ -680,7 +713,8 @@ const openImg = (img: string) => {
                       <svg class="w-3 h-3 transition-transform duration-200 group-open/raw:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                       </svg>
-                      View raw parameters
+
+                      查看原始参数
                     </summary>
                     <pre
                       class="mt-2 text-xs bg-gray-50 dark:bg-gray-800/50 border border-gray-200/60 dark:border-gray-700/60 p-3 rounded-lg overflow-x-auto text-gray-700 dark:text-gray-300 font-mono"
@@ -718,10 +752,8 @@ const openImg = (img: string) => {
                   </svg>
                   📋 View implementation plan
                 </summary>
-                <!-- TODO: Markdown 组件占位 -->
-                <!-- <MessageContent> -->
+                <!-- Markdown 组件占位 -->
                 <MessageResponse class="mt-3 prose prose-sm max-w-none dark:prose-invert" :content="parsedExitPlanInput.plan"> </MessageResponse>
-                <!-- </MessageContent> -->
               </details>
             </div>
 
@@ -736,7 +768,7 @@ const openImg = (img: string) => {
                   <svg class="w-4 h-4 transition-transform duration-200 group-open/params:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                   </svg>
-                  View input parameters
+                  查看入参
                 </summary>
                 <pre
                   class="mt-3 text-xs bg-gray-50 dark:bg-gray-800/50 border border-gray-200/60 dark:border-gray-700/60 p-3 rounded-lg whitespace-pre-wrap break-words overflow-hidden text-gray-700 dark:text-gray-300 font-mono"
@@ -795,10 +827,7 @@ const openImg = (img: string) => {
                 <div :class="['relative text-sm', message.toolResult.isError ? 'text-red-900 dark:text-red-100' : 'text-green-900 dark:text-green-100']">
                   <!-- TODO: 这里的工具结果渲染逻辑比较复杂，需要处理多种特殊情况 -->
                   <!-- 例如：TodoList 结果、Grep/Glob 结果、交互式提示结果等 -->
-                  <!-- 暂时使用 MessageResponse 渲染 -->
-                  <!-- <MessageContent> -->
                   <MessageResponse class="prose prose-sm max-w-none prose-green dark:prose-invert"> </MessageResponse>
-                  <!-- </MessageContent> -->
                 </div>
 
                 <!-- 权限建议分支 -->
@@ -964,7 +993,7 @@ const openImg = (img: string) => {
                   d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"
                 />
               </svg>
-              <span class="font-medium">Update todo list</span>
+              <span class="font-medium">更新待办列表</span>
             </div>
             <!-- TODO: TodoList 组件占位 -->
             TodoList
@@ -981,7 +1010,7 @@ const openImg = (img: string) => {
                   d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"
                 />
               </svg>
-              <span class="font-medium">Update todo list</span>
+              <span class="font-medium">更新待办列表</span>
             </div>
           </div>
         </div>
@@ -1015,13 +1044,11 @@ const openImg = (img: string) => {
               <svg class="w-3 h-3 transition-transform group-open:rotate-90" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
               </svg>
-              <span>💭 Thinking...</span>
+              <span>💭 思考中...</span>
             </summary>
             <div class="mt-2 pl-4 border-l-2 border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400 text-sm">
-              <!-- TODO: Markdown 组件占位 -->
-              <!-- <MessageContent> -->
+              <!--  Markdown 组件占位 -->
               <MessageResponse class="prose prose-sm max-w-none dark:prose-invert prose-gray" :content="message.content"> </MessageResponse>
-              <!-- </MessageContent> -->
             </div>
           </details>
         </div>

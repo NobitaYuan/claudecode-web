@@ -13,16 +13,55 @@ import {
   PromptInputBody,
   PromptInputButton,
   PromptInputFooter,
-  PromptInputHeader,
   PromptInputSubmit,
   PromptInputTextarea,
   PromptInputTools,
 } from '@/components/ai-elements/prompt-input'
 import { GlobeIcon, MicIcon } from 'lucide-vue-next'
 import { useChat } from '../hooks/useChat'
-import ChatInterface from './components/chatInterface.vue'
+import ChatInterface from './components/ChatInterface.vue'
+import ThinkingMessage from './components/ThinkingMessage.vue'
 
-const { convertedMessages } = useChat()
+const thinkingModes = [
+  {
+    id: 'none',
+    name: 'Standard',
+    description: 'Regular Claude response',
+    prefix: '',
+    color: 'text-gray-600',
+  },
+  {
+    id: 'think',
+    name: 'Think',
+    description: 'Basic extended thinking',
+    prefix: 'think',
+    color: 'text-blue-600',
+  },
+  {
+    id: 'think-hard',
+    name: 'Think Hard',
+    description: 'More thorough evaluation',
+    prefix: 'think hard',
+    color: 'text-purple-600',
+  },
+  {
+    id: 'think-harder',
+    name: 'Think Harder',
+    description: 'Deep analysis with alternatives',
+    prefix: 'think harder',
+    color: 'text-indigo-600',
+  },
+  {
+    id: 'ultrathink',
+    name: 'Ultrathink',
+    description: 'Maximum thinking budget',
+    prefix: 'ultrathink',
+    color: 'text-red-600',
+  },
+]
+
+const { convertedMessages, selectedProject, selectedSession } = useChat()
+const { sendMessage, isLoading } = useWebSocket()
 
 /** 是否使用联网搜索 */
 const useWebSearch = ref(false)
@@ -30,8 +69,82 @@ const useWebSearch = ref(false)
 const useMicrophone = ref(false)
 /** 状态 */
 const status = ref<ChatStatus>('ready')
+/** 思考模式 */
+const thinkingMode = ref('')
 
-function addUserMessage(content: string) {}
+function addUserMessage(content: string) {
+  // ============================================================
+  // 逻辑块 1: 基本验证
+  // 检查是否正在加载、是否选中了项目
+  // ============================================================
+  if (isLoading.value || !selectedProject.value) {
+    return
+  }
+
+  // ============================================================
+  // 逻辑块 2: 思考模式前缀
+  // 如果用户选择了"思考模式"，会在消息前加前缀
+  // ============================================================
+  let messageContent = content
+  const selectedThinkingMode = thinkingModes.find((mode) => mode.id === thinkingMode.value)
+  if (selectedThinkingMode && selectedThinkingMode.prefix) {
+    messageContent = `${selectedThinkingMode.prefix}: ${content}`
+  }
+
+  // ============================================================
+  // 逻辑块 4: 添加用户消息到聊天
+  // 在聊天界面显示用户发送的消息
+  // ============================================================
+  const userMessage: Message = {
+    type: 'user',
+    content: messageContent,
+    timestamp: new Date(),
+  }
+
+  convertedMessages.value.push(userMessage)
+
+  // ============================================================
+  // 逻辑块 5: 设置加载状态
+  // - 显示"正在处理"状态
+  // - 允许中止会话
+  // - 显示 Claude 状态（处理中、token 数等）
+  // - 自动滚动到底部
+  // ============================================================
+
+  // setCanAbortSession(true)
+  // setClaudeStatus({
+  //   text: 'Processing',
+  //   tokens: 0,
+  //   can_interrupt: true,
+  // })
+
+  // 始终在用户发送消息时滚动到底部并重置滚动状态
+  // setIsUserScrolledUp(false)
+  // setTimeout(() => scrollToBottom(), 100)
+
+  // ============================================================
+  // 逻辑块 8: 发送 Claude 命令
+  // 发送 claude-command 类型的 WebSocket 消息
+  // ============================================================
+  sendMessage({
+    type: 'claude-command',
+    command: messageContent,
+    options: {
+      projectPath: selectedProject.value?.path,
+      cwd: selectedProject.value?.fullPath,
+      sessionId: selectedSession.value.id,
+      resume: !!selectedSession.value,
+      permissionMode: 'default', // ['default', 'acceptEdits', 'bypassPermissions', 'plan']
+      model: 'sonnet',
+    },
+  })
+
+  // ============================================================
+  // 逻辑块 9: 清空输入状态
+  // 发送消息后清空输入框和相关状态
+  // ============================================================
+  thinkingMode.value = null
+}
 
 function handleSubmit(message: PromptInputMessage) {
   console.log('message', message)
@@ -54,6 +167,8 @@ function toggleWebSearch() {
 }
 
 import { useCreateDiff } from './utils/createDiff'
+import { useWebSocket } from '../hooks/useWebSocket'
+import { Message } from '../hooks/utils/message'
 
 const { createDiff } = useCreateDiff()
 </script>
@@ -63,8 +178,9 @@ const { createDiff } = useCreateDiff()
     <Conversation>
       <ConversationContent>
         <template v-for="(msg, index) in convertedMessages" :key="index">
-          <ChatInterface :message="msg" :index="index" :createDiff="createDiff" />
+          <ChatInterface :message="msg" :prevMessage="index > 0 ? convertedMessages[index - 1] : null" :index="index" :createDiff="createDiff" />
         </template>
+        <ThinkingMessage v-if="isLoading" />
       </ConversationContent>
       <ConversationScrollButton />
     </Conversation>
@@ -72,14 +188,13 @@ const { createDiff } = useCreateDiff()
     <div class="grid shrink-0 gap-4 pt-4">
       <div class="w-full px-4 pb-4">
         <PromptInput class="w-full" multiple global-drop @submit="handleSubmit">
-          <PromptInputHeader>
-            <PromptInputAttachments>
-              <template #default="{ file }">
-                <PromptInputAttachment :file="file" />
-              </template>
-            </PromptInputAttachments>
-          </PromptInputHeader>
-
+          <!-- <PromptInputHeader> -->
+          <PromptInputAttachments>
+            <template #default="{ file }">
+              <PromptInputAttachment :file="file" />
+            </template>
+          </PromptInputAttachments>
+          <!-- </PromptInputHeader> -->
           <PromptInputBody>
             <PromptInputTextarea />
           </PromptInputBody>
