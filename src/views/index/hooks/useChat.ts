@@ -8,7 +8,7 @@ import { convertSessionMessages } from './utils/messageConverter'
 const projects = ref<Project[]>([])
 const projectLoading = ref(false)
 const searchValue = ref('')
-const sortBy = ref<'recent' | 'name'>('recent')
+const sortBy = ref<'recent' | 'name' | 'default'>('recent')
 // 过滤后的项目列表
 const filteredProjects = computed(() => {
   let result = projects.value
@@ -71,6 +71,7 @@ const currentOffset = ref(0)
 const rawMessages = ref<RawSessionMessage[]>([])
 // 转换后的对话列表
 const convertedMessages = ref<Message[]>([])
+const messageLoading = ref(false)
 
 /**
  * 获取对话
@@ -84,19 +85,21 @@ const getMessages = async () => {
     MessagePlugin.error('请选择对话！')
     return
   }
-  const res = await api.sessionMessages(selectedProject.value.name, selectedSession.value.id, 20, currentOffset.value)
-  if (!res.ok) {
-    MessagePlugin.error('请求对话失败！')
-    return
-  }
-  const data = await res.json()
-  rawMessages.value = data.messages
   try {
+    messageLoading.value = true
+    const res = await api.sessionMessages(selectedProject.value.name, selectedSession.value.id, 20, currentOffset.value)
+    if (!res.ok) {
+      MessagePlugin.error('请求对话失败！')
+      return
+    }
+    const data = await res.json()
+    rawMessages.value = data.messages
     convertedMessages.value = convertSessionMessages(data.messages)
-    console.log('before:', rawMessages.value, 'convert：', convertedMessages.value)
+    console.log('rawMessages:', rawMessages.value, 'convert：', convertedMessages.value)
   } catch (error) {
     console.error(error)
-    MessagePlugin.error('对转换话失败！', error)
+  } finally {
+    messageLoading.value = false
   }
 }
 /*

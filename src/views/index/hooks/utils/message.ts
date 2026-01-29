@@ -122,6 +122,8 @@ export interface ErrorMessage extends BaseMessage {
  * 使用时不需要类型收窄，可以直接访问任意字段
  */
 export interface Message {
+  uuid?: string
+
   /** 消息类型 */
   type: BaseMessage['type']
   /** 消息时间戳 */
@@ -180,6 +182,8 @@ export type MessageType = 'user' | 'assistant' | 'error' | 'tool'
  * 原始会话消息（来自 WebSocket 或 JSONL 文件）
  */
 export interface RawSessionMessage {
+  /** 消息唯一标识 */
+  uuid?: string
   /** 消息时间戳 */
   timestamp?: string
   /** 消息类型（某些格式使用） */
@@ -214,6 +218,7 @@ export interface RawSessionMessage {
         }[]
       | string
   }
+  output?: string
 }
 
 /**

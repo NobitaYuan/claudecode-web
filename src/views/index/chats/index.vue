@@ -20,7 +20,10 @@ import {
 import { GlobeIcon, MicIcon } from 'lucide-vue-next'
 import { useChat } from '../hooks/useChat'
 import ChatInterface from './components/ChatInterface.vue'
-import ThinkingMessage from './components/ThinkingMessage.vue'
+// import ThinkingMessage from './components/ThinkingMessage.vue'
+import { useCreateDiff } from './utils/createDiff'
+import { useWebSocket } from '../hooks/useWebSocket'
+import { Message } from '../hooks/utils/message'
 
 const thinkingModes = [
   {
@@ -166,23 +169,33 @@ function toggleWebSearch() {
   useWebSearch.value = !useWebSearch.value
 }
 
-import { useCreateDiff } from './utils/createDiff'
-import { useWebSocket } from '../hooks/useWebSocket'
-import { Message } from '../hooks/utils/message'
-
 const { createDiff } = useCreateDiff()
+
+const ConversationScrollButtonRef = ref<InstanceType<typeof ConversationScrollButton>>()
+const scrollToBottom = () => {
+  if (!ConversationScrollButtonRef.value?.scrollToBottom) return
+  ConversationScrollButtonRef.value.scrollToBottom()
+}
+
+onMounted(() => {
+  scrollToBottom()
+})
+
+defineExpose({
+  scrollToBottom,
+})
 </script>
 
 <template>
   <div class="chat relative flex size-full flex-col divide-y overflow-hidden">
-    <Conversation>
+    <Conversation :initial="false" :anchor="'auto'" :resize="{ damping: 0.8, stiffness: 0.05, mass: 1 }">
       <ConversationContent>
-        <template v-for="(msg, index) in convertedMessages" :key="index">
+        <template v-for="(msg, index) in convertedMessages" :key="msg?.uuid || index">
           <ChatInterface :message="msg" :prevMessage="index > 0 ? convertedMessages[index - 1] : null" :index="index" :createDiff="createDiff" />
         </template>
-        <ThinkingMessage v-if="isLoading" />
+        <!-- <ThinkingMessage v-if="isLoading" /> -->
       </ConversationContent>
-      <ConversationScrollButton />
+      <ConversationScrollButton ref="ConversationScrollButtonRef" />
     </Conversation>
 
     <div class="grid shrink-0 gap-4 pt-4">

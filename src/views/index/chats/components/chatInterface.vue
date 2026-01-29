@@ -41,7 +41,7 @@ const props = withDefaults(defineProps<IProps>(), {
   onFileOpen: null,
   onShowSettings: null,
   onGrantToolPermission: null,
-  autoExpandTools: true,
+  autoExpandTools: false,
   showRawParameters: false,
   showThinking: true,
   selectedProject: null,

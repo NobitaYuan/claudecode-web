@@ -9,6 +9,7 @@
 [![Vue](https://img.shields.io/badge/Vue-3.5-42b883?logo=vue.js)](https://vuejs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.8-3178c6?logo=typescript)](https://www.typescriptlang.org/)
 [![Vite](https://img.shields.io/badge/Vite-Rolldown-646cff?logo=vite)](https://vitejs.dev/)
+
 <img src="./example.png" alt="example" width="100%">
 
 </div>
@@ -23,7 +24,6 @@
 - 📊 **可视化工具** - 图表、流程图等数据可视化
 - 🎨 **现代化 UI** - 基于 TDesign 和 Tailwind CSS 的精美界面
 - 🌐 **国际化** - 多语言支持（i18n）
-- 📱 **响应式设计** - 适配各种屏幕尺寸
 - 🎯 **类型安全** - 完整的 TypeScript 类型定义
 
 ---

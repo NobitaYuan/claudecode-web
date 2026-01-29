@@ -91,6 +91,7 @@ export const convertSessionMessages = (rawMessages: RawSessionMessage[]): Messag
       if (!shouldSkip) {
         content = unescapeWithMathProtection(content)
         converted.push({
+          uuid: msg.uuid,
           type: 'user',
           content,
           timestamp: msg.timestamp || new Date().toISOString(),
@@ -103,6 +104,7 @@ export const convertSessionMessages = (rawMessages: RawSessionMessage[]): Messag
     // --------------------------------------------------------
     else if (msg.type === 'thinking' && msg.message?.content) {
       converted.push({
+        uuid: msg.uuid,
         type: 'assistant',
         content: unescapeWithMathProtection(msg.message.content as string),
         timestamp: msg.timestamp || new Date().toISOString(),
@@ -115,6 +117,7 @@ export const convertSessionMessages = (rawMessages: RawSessionMessage[]): Messag
     // --------------------------------------------------------
     else if (msg.type === 'tool_use' && msg.toolName) {
       converted.push({
+        uuid: msg.uuid,
         type: 'assistant',
         content: '',
         timestamp: msg.timestamp || new Date().toISOString(),
@@ -157,6 +160,7 @@ export const convertSessionMessages = (rawMessages: RawSessionMessage[]): Messag
             text = unescapeWithMathProtection(text)
 
             converted.push({
+              uuid: msg.uuid,
               type: 'assistant',
               content: text,
               timestamp: msg.timestamp || new Date().toISOString(),
@@ -168,6 +172,7 @@ export const convertSessionMessages = (rawMessages: RawSessionMessage[]): Messag
             const toolResult = toolResults.get(part.id!)
 
             converted.push({
+              uuid: msg.uuid,
               type: 'assistant',
               content: '',
               timestamp: msg.timestamp || new Date().toISOString(),
@@ -192,6 +197,7 @@ export const convertSessionMessages = (rawMessages: RawSessionMessage[]): Messag
         text = unescapeWithMathProtection(text)
 
         converted.push({
+          uuid: msg.uuid,
           type: 'assistant',
           content: text,
           timestamp: msg.timestamp || new Date().toISOString(),

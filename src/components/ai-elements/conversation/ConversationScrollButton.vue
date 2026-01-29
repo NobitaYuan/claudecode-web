@@ -17,6 +17,10 @@ const showScrollButton = computed(() => !isAtBottom.value)
 function handleClick() {
   scrollToBottom()
 }
+
+defineExpose({
+  scrollToBottom,
+})
 </script>
 
 <template>

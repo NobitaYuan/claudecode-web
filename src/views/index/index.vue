@@ -1,13 +1,11 @@
 <script lang="ts" setup>
 import { useChat } from './hooks/useChat'
-import chatView from './chats/index.vue'
 import { useWebSocket } from './hooks/useWebSocket'
-import { formatLastActivity } from '@/utils/tools'
 import { useWebSocketMessageHandler } from './hooks/useWebSocketMessageHandler'
+import sidebar from './components/sidebar.vue'
+import chatView from './chats/index.vue'
 
-const activeProjects = ref<string[]>([])
-
-const { filteredProjects, getProjects, searchValue, projectLoading, sortBy, selectedProject, selectedSession, rawMessages, handleSessionClick } = useChat()
+const { getProjects, rawMessages } = useChat()
 
 const { connect } = useWebSocket()
 
@@ -23,85 +21,7 @@ onMounted(async () => {
   <div class="index_container">
     <!-- 左侧边栏 -->
     <div class="left">
-      <t-input style="width: 290px" v-model="searchValue" placeholder="搜索项目或会话..." clearable class="search_input">
-        <template #prefix-icon>
-          <t-icon name="search" />
-        </template>
-      </t-input>
-
-      <div class="filter_container">
-        <div class="filter_label">排序方式</div>
-        <t-radio-group v-model="sortBy" variant="default-filled">
-          <t-radio value="recent">最近活动</t-radio>
-          <t-radio value="name">名称</t-radio>
-        </t-radio-group>
-      </div>
-
-      <div v-if="projectLoading" class="loading_container">
-        <t-loading size="small" />
-      </div>
-
-      <div v-else-if="filteredProjects.length === 0" class="empty_container">
-        <t-empty description="暂无项目" size="small" />
-      </div>
-
-      <div v-else class="projects_list">
-        <t-collapse v-model="activeProjects" expandMutex :borderless="true" class="projects_collapse">
-          <t-collapse-panel
-            v-for="project in filteredProjects"
-            :key="project.name"
-            :value="project.name"
-            class="project_panel"
-            :class="{ active: project.name === selectedProject?.name }"
-          >
-            <template #header>
-              <div class="project_header">
-                <div class="project_header_left">
-                  <t-icon name="folder" size="18px" class="project_icon" />
-                  <div class="project_info">
-                    <div class="project_name">
-                      {{ project.displayName || project.name }}
-                    </div>
-                    <div class="project_meta">
-                      <t-tag v-if="project.sessionMeta?.total" size="small" variant="light"> {{ project.sessionMeta.total }}个会话 </t-tag>
-                      <span v-if="project.sessions?.length > 0" class="last_activity">
-                        {{ formatLastActivity(project.sessions[0].lastActivity) }}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </template>
-
-            <template #default>
-              <div class="sessions_list">
-                <div
-                  v-for="session in project.sessions"
-                  :key="session.id"
-                  class="session_item"
-                  :class="{ active: session.id === selectedSession?.id }"
-                  @click="handleSessionClick(project, session)"
-                >
-                  <div class="session_header">
-                    <div class="session_summary">
-                      {{ session.summary.replace(/<[^>]*>/g, '').substring(0, 50) }}
-                      <span v-if="session.summary.length > 50">...</span>
-                    </div>
-                  </div>
-                  <div class="session_time">
-                    {{ formatLastActivity(session.lastActivity) }}
-                    <t-tag theme="success" size="small" variant="outline"> {{ session.messageCount }}条消息 </t-tag>
-                  </div>
-                </div>
-
-                <div v-if="!project.sessions || project.sessions.length === 0" class="no_sessions">
-                  <t-empty description="暂无会话" size="small" />
-                </div>
-              </div>
-            </template>
-          </t-collapse-panel>
-        </t-collapse>
-      </div>
+      <sidebar />
     </div>
 
     <!-- 右侧内容区 -->
@@ -197,44 +117,52 @@ onMounted(async () => {
             flex: 1;
             display: flex;
             overflow: auto;
-            .project_header_left {
-              display: flex;
-              align-items: flex-start;
-              gap: 8px;
+
+            .project_icon {
+              color: var(--td-brand-color);
+              flex-shrink: 0;
+              margin-top: 2px;
+            }
+
+            .project_info {
               flex: 1;
+              min-width: 0;
               overflow: hidden;
 
-              .project_icon {
-                color: var(--td-brand-color);
-                flex-shrink: 0;
-                margin-top: 2px;
-              }
-
-              .project_info {
-                flex: 1;
-                min-width: 0;
-                overflow: hidden;
-
-                .project_name {
-                  width: 100%;
+              .project_name {
+                width: 100%;
+                display: flex;
+                gap: 8px;
+                align-items: center;
+                .name_text {
                   font-size: 14px;
                   font-weight: 500;
                   overflow: hidden;
                   text-overflow: ellipsis;
                   white-space: nowrap;
                 }
+              }
 
-                .project_meta {
-                  display: flex;
-                  align-items: center;
-                  justify-content: space-between;
-                  gap: 8px;
-                  margin-top: 4px;
-
-                  .last_activity {
-                    color: var(--td-text-color-placeholder);
-                    font-size: 12px;
-                  }
+              .project_meta {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 8px;
+                margin-top: 4px;
+                .path {
+                  flex: 1;
+                  font-weight: normal;
+                  font-size: 11px;
+                  overflow: hidden;
+                  text-overflow: ellipsis;
+                  white-space: nowrap;
+                  color: var(--td-text-color-placeholder);
+                }
+                .last_activity {
+                  color: var(--td-text-color-placeholder);
+                  font-size: 12px;
+                  flex-shrink: 0;
+                  font-weight: normal;
                 }
               }
             }

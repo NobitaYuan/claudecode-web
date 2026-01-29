@@ -12,7 +12,7 @@ import { LoadingProgressMessage, ProjectsUpdatedMessage, useWebSocket } from './
  * @returns WebSocket 消息处理状态和方法
  */
 export function useWebSocketMessageHandler() {
-  const { wsMessages, loadingProgress, loadingProgressTimeout, isLoading } = useWebSocket()
+  const { wsMessages, loadingProgress, loadingProgressTimeout } = useWebSocket()
 
   const { projects, selectedProject, selectedSession, getMessages } = useChat()
 
@@ -99,7 +99,6 @@ export function useWebSocketMessageHandler() {
       // 分支1: 处理加载进度消息
       // ========================================================
       if (latestMessage.type === 'loading_progress') {
-        isLoading.value = true
         handleLoadingProgress(latestMessage as LoadingProgressMessage)
         return
       }
@@ -108,10 +107,6 @@ export function useWebSocketMessageHandler() {
       // ========================================================
       if (latestMessage.type === 'projects_updated') {
         handleProjectsUpdate(latestMessage as ProjectsUpdatedMessage)
-        const timer = setTimeout(() => {
-          isLoading.value = false
-          timer && clearInterval(timer)
-        }, 2000)
       }
     },
     { deep: true },
