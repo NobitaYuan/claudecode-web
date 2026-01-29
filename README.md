@@ -1,8 +1,8 @@
-# Claude Code on Web
+<h1 align="center">
+  <a href="https://github.com/NobitaYuan/claudecode-on-web" target="_blank">Claude Code on Web</a>
+</h1>
 
 <div align="center">
-
-**Claude Code 的 Web 界面实现**
 
 一个功能完整的 Claude Code Web 客户端，提供现代化的 AI 编程助手体验
 
