@@ -8,7 +8,7 @@ const { filteredProjects, searchValue, projectLoading, sortBy, selectedProject, 
 
 <template>
   <div class="chat_sidebar">
-    <t-input style="width: 92%" v-model="searchValue" placeholder="搜索项目或会话..." clearable class="search_input">
+    <t-input v-model="searchValue" placeholder="搜索项目或会话..." clearable class="search_input">
       <template #prefix-icon>
         <t-icon name="search" />
       </template>
@@ -92,7 +92,7 @@ const { filteredProjects, searchValue, projectLoading, sortBy, selectedProject, 
 <style lang="scss" scoped>
 .chat_sidebar {
   position: relative;
-  width: 320px;
+  width: 100%;
   height: 100%;
   display: flex;
   flex-direction: column;
@@ -100,9 +100,9 @@ const { filteredProjects, searchValue, projectLoading, sortBy, selectedProject, 
   background-color: var(--td-bg-color-container);
 
   .search_input {
-    margin: 12px;
     margin-bottom: 8px;
     flex-shrink: 0;
+    padding: 12px;
   }
 
   .filter_container {
