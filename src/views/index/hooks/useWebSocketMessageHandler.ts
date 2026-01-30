@@ -43,6 +43,8 @@ export function useWebSocketMessageHandler() {
         loadingProgressTimeout.value = null
       }, 500)
     }
+    // 更新消息
+    // getMessages()
   }
 
   // ============================================================

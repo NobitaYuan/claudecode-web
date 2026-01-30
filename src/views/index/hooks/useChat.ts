@@ -87,7 +87,7 @@ const getMessages = async () => {
   }
   try {
     messageLoading.value = true
-    const res = await api.sessionMessages(selectedProject.value.name, selectedSession.value.id, 20, currentOffset.value)
+    const res = await api.sessionMessages(selectedProject.value.name, selectedSession.value.id, 40, currentOffset.value)
     if (!res.ok) {
       MessagePlugin.error('请求对话失败！')
       return

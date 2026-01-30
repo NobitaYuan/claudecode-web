@@ -35,16 +35,16 @@ function unescapeWithMathProtection(text: string): string {
  */
 export const convertSessionMessages = (rawMessages: RawSessionMessage[]): Message[] => {
   const converted: Message[] = []
-  const toolResults = new Map<string, ToolResult>()
+  const userToolResults = new Map<string, ToolResult>()
 
   // ============================================================
-  // 第一遍遍历：收集所有工具结果
+  // 第一遍遍历：收集所有用户消息的工具结果
   // ============================================================
   for (const msg of rawMessages) {
     if (msg.message?.role === 'user' && Array.isArray(msg.message?.content)) {
       for (const part of msg.message.content) {
         if (part.type === 'tool_result') {
-          toolResults.set(part.id!, {
+          userToolResults.set(part.tool_use_id!, {
             content: typeof part.content === 'string' ? part.content : JSON.stringify(part.content),
             isError: part.is_error || false,
             timestamp: new Date(msg.timestamp || Date.now()),
@@ -54,6 +54,7 @@ export const convertSessionMessages = (rawMessages: RawSessionMessage[]): Messag
       }
     }
   }
+  console.log('userToolResults', userToolResults)
 
   // ============================================================
   // 第二遍遍历：处理消息并附加工具结果
@@ -66,8 +67,17 @@ export const convertSessionMessages = (rawMessages: RawSessionMessage[]): Messag
       let content = ''
 
       if (Array.isArray(msg.message.content)) {
+        // console.log('msg.message.content', msg.message.content)
         // 处理数组内容（跳过 tool_result）
-        const textParts = msg.message.content.filter((part) => part.type === 'text').map((part) => decodeHtmlEntities(part.text || ''))
+        const textParts = msg.message.content
+          .filter((part) => part.type === 'text') // || part.type === 'tool_result'
+          .map((part) => {
+            // if (part.type === 'tool_result' && typeof part.content === 'string') {
+            //   return part.content || ''
+            // } else {
+            // }
+            return decodeHtmlEntities(part.text || '')
+          })
 
         content = textParts.join('\n')
       } else if (typeof msg.message.content === 'string') {
@@ -75,7 +85,7 @@ export const convertSessionMessages = (rawMessages: RawSessionMessage[]): Messag
       } else {
         content = decodeHtmlEntities(String(msg.message.content))
       }
-
+      // console.log('content', content)
       // 过滤系统消息和命令消息
       const shouldSkip =
         !content ||
@@ -85,8 +95,8 @@ export const convertSessionMessages = (rawMessages: RawSessionMessage[]): Messag
         content.startsWith('<local-command-stdout>') ||
         content.startsWith('<system-reminder>') ||
         content.startsWith('Caveat:') ||
-        content.startsWith('This session is being continued') ||
-        content.startsWith('[Request interrupted')
+        content.startsWith('This session is being continued')
+      // content.startsWith('[Request interrupted')
 
       if (!shouldSkip) {
         content = unescapeWithMathProtection(content)
@@ -98,56 +108,6 @@ export const convertSessionMessages = (rawMessages: RawSessionMessage[]): Messag
         } as UserMessage)
       }
     }
-
-    // --------------------------------------------------------
-    // 处理思考消息（Codex reasoning）
-    // --------------------------------------------------------
-    else if (msg.type === 'thinking' && msg.message?.content) {
-      converted.push({
-        uuid: msg.uuid,
-        type: 'assistant',
-        content: unescapeWithMathProtection(msg.message.content as string),
-        timestamp: msg.timestamp || new Date().toISOString(),
-        isThinking: true,
-      } as ThinkingMessage)
-    }
-
-    // --------------------------------------------------------
-    // 处理工具调用消息（Codex function calls）
-    // --------------------------------------------------------
-    else if (msg.type === 'tool_use' && msg.toolName) {
-      converted.push({
-        uuid: msg.uuid,
-        type: 'assistant',
-        content: '',
-        timestamp: msg.timestamp || new Date().toISOString(),
-        isToolUse: true,
-        toolName: msg.toolName,
-        toolInput: msg.toolInput || '',
-        toolId: msg.toolCallId || '',
-        toolCallId: msg.toolCallId,
-      } as ToolUseMessage)
-    }
-
-    // --------------------------------------------------------
-    // 处理工具结果消息（Codex function outputs）
-    // --------------------------------------------------------
-    else if (msg.type === 'tool_result') {
-      // 找到对应的 tool_use 并附加结果
-      for (let i = converted.length - 1; i >= 0; i--) {
-        const message = converted[i]
-        if (isToolUseMessage(message) && !message.toolResult) {
-          if (!msg.toolCallId || message.toolCallId === msg.toolCallId) {
-            message.toolResult = {
-              content: msg.output || '',
-              isError: false,
-            }
-            break
-          }
-        }
-      }
-    }
-
     // --------------------------------------------------------
     // 处理 AI 助手消息
     // --------------------------------------------------------
@@ -169,8 +129,57 @@ export const convertSessionMessages = (rawMessages: RawSessionMessage[]): Messag
 
           // 处理工具调用部分
           else if (part.type === 'tool_use') {
-            const toolResult = toolResults.get(part.id!)
-
+            const toolResult = userToolResults.get(part.id!)
+            // console.log('toolResult', toolResult)
+            // 交互式工具
+            if (part.name === 'AskUserQuestion') {
+              converted.push({
+                uuid: msg.uuid,
+                type: 'assistant',
+                content: '',
+                timestamp: msg.timestamp || new Date().toISOString(),
+                isToolUse: true,
+                isInteractivePrompt: part.name === 'AskUserQuestion', // 判断是否为交互式
+                toolName: part.name,
+                toolInput: JSON.stringify(part.input),
+                toolId: part.tool_use_id,
+                toolResult: toolResult
+                  ? {
+                      content: typeof toolResult.content === 'string' ? toolResult.content : JSON.stringify(toolResult.content),
+                      isError: toolResult.isError,
+                      toolUseResult: toolResult.toolUseResult,
+                    }
+                  : undefined,
+                toolError: toolResult?.isError || false,
+                toolResultTimestamp: toolResult?.timestamp || new Date(),
+              } as ToolUseMessage)
+            }
+            // 其他的工具
+            else {
+              converted.push({
+                uuid: msg.uuid,
+                type: 'assistant',
+                content: '',
+                timestamp: msg.timestamp || new Date().toISOString(),
+                isToolUse: true,
+                toolName: part.name,
+                toolInput: JSON.stringify(part.input),
+                toolId: part.tool_use_id,
+                toolResult: toolResult
+                  ? {
+                      content: typeof toolResult.content === 'string' ? toolResult.content : JSON.stringify(toolResult.content),
+                      isError: toolResult.isError,
+                      toolUseResult: toolResult.toolUseResult,
+                    }
+                  : undefined,
+                toolError: toolResult?.isError || false,
+                toolResultTimestamp: toolResult?.timestamp || new Date(),
+              } as ToolUseMessage)
+            }
+          }
+          // 工具调用结果
+          else if (part.type === 'tool_result') {
+            const toolResult = userToolResults.get(part.tool_use_id!)
             converted.push({
               uuid: msg.uuid,
               type: 'assistant',
@@ -179,7 +188,7 @@ export const convertSessionMessages = (rawMessages: RawSessionMessage[]): Messag
               isToolUse: true,
               toolName: part.name,
               toolInput: JSON.stringify(part.input),
-              toolId: part.id,
+              toolId: part.tool_use_id,
               toolResult: toolResult
                 ? {
                     content: typeof toolResult.content === 'string' ? toolResult.content : JSON.stringify(toolResult.content),
@@ -190,6 +199,18 @@ export const convertSessionMessages = (rawMessages: RawSessionMessage[]): Messag
               toolError: toolResult?.isError || false,
               toolResultTimestamp: toolResult?.timestamp || new Date(),
             } as ToolUseMessage)
+          }
+          // 处理思考部分
+          else if (part.type === 'thinking') {
+            let text = part.thinking || ''
+            text = unescapeWithMathProtection(text)
+            converted.push({
+              uuid: msg.uuid,
+              type: 'assistant',
+              content: text,
+              timestamp: msg.timestamp || new Date().toISOString(),
+              isThinking: true,
+            } as ThinkingMessage)
           }
         }
       } else if (typeof msg.message.content === 'string') {

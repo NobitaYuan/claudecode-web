@@ -69,7 +69,7 @@ export interface ToolUseMessage extends BaseMessage {
   /** 标记为工具调用 */
   isToolUse: true
   /** 工具名称 */
-  toolName: string
+  toolName: ToolName
   /** 工具输入（JSON 字符串） */
   toolInput: string
   /** 工具调用 ID */
@@ -146,7 +146,7 @@ export interface Message {
   /** 标记为工具调用 */
   isToolUse?: true
   /** 工具名称 */
-  toolName?: string
+  toolName?: ToolName
   /** 工具输入（JSON 字符串） */
   toolInput?: string
   /** 工具调用 ID */
@@ -160,13 +160,43 @@ export interface Message {
   /** 工具结果时间戳 */
   toolResultTimestamp?: Date
   /** 标记为交互式提示 */
-  isInteractivePrompt?: true
+  isInteractivePrompt?: boolean
 }
 
 /**
  * 工具名称类型
  */
-export type ToolName = 'Read' | 'Write' | 'Edit' | 'Bash' | 'Grep' | 'Glob' | 'TodoWrite' | 'TodoRead' | 'exit_plan_mode' | 'ApplyPatch' | string // 允许其他工具名称
+export type ToolName =
+  | 'Read'
+  | 'Write'
+  | 'Edit'
+  | 'Bash'
+  | 'Grep'
+  | 'Glob'
+  | 'Task'
+  | 'TodoWrite'
+  | 'TodoRead'
+  | 'ExitPlanMode'
+  | 'ApplyPatch'
+  | 'AskUserQuestion'
+  | 'Skill'
+// 允许其他工具名称
+
+export const toolNameReflect: Record<ToolName, string> = {
+  Read: '读取',
+  Write: '写入',
+  Edit: '编辑',
+  Bash: '终端执行',
+  Grep: '内容检索',
+  Glob: '文件匹配',
+  Task: '任务',
+  TodoWrite: '待办写入',
+  TodoRead: '待办读取',
+  ExitPlanMode: '结束规划',
+  ApplyPatch: '应用补丁',
+  AskUserQuestion: '询问用户问题',
+  Skill: '技能',
+}
 
 /**
  * AI 提供商类型
@@ -189,7 +219,7 @@ export interface RawSessionMessage {
   /** 消息类型（某些格式使用） */
   type?: string
   /** 工具名称（tool_use 类型） */
-  toolName?: string
+  toolName?: ToolName
   /** 工具输入（tool_use 类型） */
   toolInput?: string
   /** 工具调用 ID（Codex 使用） */
@@ -203,10 +233,12 @@ export interface RawSessionMessage {
     /** 消息内容（可以是字符串或数组） */
     content:
       | {
-          type: 'text' | 'tool_use' | 'tool_result' | 'image'
+          type: 'text' | 'tool_use' | 'tool_result' | 'image' | 'thinking'
           text?: string
+          thinking?: string
           name?: string
           id?: string
+          tool_use_id?: string
           input?: any
           is_error?: boolean
           content?: any
@@ -255,7 +287,7 @@ export interface DiffLine {
  * 权限建议类型
  */
 export interface PermissionSuggestion {
-  toolName: string
+  toolName: ToolName
   entry: string
   isAllowed: boolean
 }
@@ -313,7 +345,7 @@ export interface ReadToolInput {
 }
 
 /**
- * exit_plan_mode 工具输入类型
+ * ExitPlanMode 工具输入类型
  */
 export interface ExitPlanToolInput {
   plan: string
@@ -328,7 +360,7 @@ export interface ToolInputMap {
   Bash: BashToolInput
   TodoWrite: TodoWriteToolInput
   Read: ReadToolInput
-  exit_plan_mode: ExitPlanToolInput
+  ExitPlanMode: ExitPlanToolInput
   Grep: ParsedToolInput
   Glob: ParsedToolInput
 }
