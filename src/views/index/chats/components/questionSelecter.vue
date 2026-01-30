@@ -47,7 +47,7 @@ const initSelectedOptions = () => {
       // 转换为对象
       const answers = Object.fromEntries(matches.map(([, question, answer]) => [question, answer]))
 
-      console.log('match', matches, answers, interactivePromptQuestion.value)
+      // console.log('match', matches, answers, interactivePromptQuestion.value)
 
       // 根据答案恢复选中状态
       interactivePromptQuestion.value.forEach((q: any, questionIndex: number) => {
@@ -158,10 +158,11 @@ const hasResult = computed(() => {
         <!-- Tab 切换栏 (当有多个问题时显示) -->
         <div v-if="interactivePromptQuestion.length > 1" class="mb-4">
           <div class="flex flex-wrap gap-2 border-b border-amber-300 dark:border-amber-700 pb-2">
+            <!-- @vue-ignore -->
             <button
               v-for="(question, index) in interactivePromptQuestion"
               :key="index"
-              @click="activeTabIndex = index as number"
+              @click="activeTabIndex = index"
               :class="[
                 'px-4 py-2 rounded-t-lg text-sm font-medium transition-all',
                 activeTabIndex === index
@@ -235,6 +236,7 @@ const hasResult = computed(() => {
           <p class="text-amber-800 dark:text-amber-200 text-xs">
             {{ hasAnswer ? '已选择选项，准备提交' : '请选择一个或多个选项' }}
           </p>
+          <!-- 提交 -->
         </div>
         <toolResult v-else :message="message" />
       </div>

@@ -16,6 +16,7 @@ export default defineConfig((env: ConfigEnv) => {
   const { VITE_APP_TITLE, VITE_APP_BASE_API_URL } = envVar
   const IP = {
     dev: `http://localhost:3001`,
+    lh: 'http://192.168.2.143:3001',
   }
   return {
     plugins: [
@@ -68,11 +69,11 @@ export default defineConfig((env: ConfigEnv) => {
           },
         },
         '/ws': {
-          target: `ws://localhost:${3001}`,
+          target: IP.dev,
           ws: true,
         },
         '/shell': {
-          target: `ws://localhost:${3001}`,
+          target: IP.dev,
           ws: true,
         },
       },

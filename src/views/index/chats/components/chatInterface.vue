@@ -122,12 +122,6 @@ const parsedWriteInput = computed(() => {
   return null
 })
 
-// Write 工具的 diff 行
-const writeDiffLines = computed(() => {
-  if (!parsedWriteInput.value) return []
-  return props.createDiff('', parsedWriteInput.value.content)
-})
-
 // 解析 TodoWrite 工具输入
 const parsedTodoWriteInput = computed(() => {
   if (props.message.toolName !== 'TodoWrite' || !props.message.toolInput) return null

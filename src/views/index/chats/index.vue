@@ -24,6 +24,8 @@ import ChatInterface from './components/ChatInterface.vue'
 import { useCreateDiff } from './utils/createDiff'
 import { useWebSocket } from '../hooks/useWebSocket'
 import { Message } from '../hooks/utils/message'
+import permissionModeSelector from './components/permissionModeSelector.vue'
+import { useLocalStorage } from '@vueuse/core'
 
 const thinkingModes = [
   {
@@ -74,6 +76,8 @@ const useMicrophone = ref(false)
 const status = ref<ChatStatus>('ready')
 /** 思考模式 */
 const thinkingMode = ref('')
+/** 模式 */
+const permissionMode = useLocalStorage('permissionMode', 'default')
 
 function addUserMessage(content: string) {
   // ============================================================
@@ -129,7 +133,7 @@ function addUserMessage(content: string) {
   // 逻辑块 8: 发送 Claude 命令
   // 发送 claude-command 类型的 WebSocket 消息
   // ============================================================
-  sendMessage({
+  const msg = {
     type: 'claude-command',
     command: messageContent,
     options: {
@@ -137,10 +141,12 @@ function addUserMessage(content: string) {
       cwd: selectedProject.value?.fullPath,
       sessionId: selectedSession.value.id,
       resume: !!selectedSession.value,
-      permissionMode: 'default', // ['default', 'acceptEdits', 'bypassPermissions', 'plan']
+      permissionMode: permissionMode.value, // ['default', 'acceptEdits', 'bypassPermissions', 'plan']
       model: 'sonnet',
     },
-  })
+  }
+  console.log('msg', msg)
+  sendMessage(msg)
 
   // ============================================================
   // 逻辑块 9: 清空输入状态
@@ -150,7 +156,6 @@ function addUserMessage(content: string) {
 }
 
 function handleSubmit(message: PromptInputMessage) {
-  console.log('message', message)
   const text = message.text.trim()
   const hasText = text.length > 0
   const hasAttachments = message.files.length > 0
@@ -159,6 +164,15 @@ function handleSubmit(message: PromptInputMessage) {
 
   status.value = 'submitted'
   addUserMessage(hasText ? text : '附件')
+}
+
+// 打断发送
+function abortSession() {
+  sendMessage({
+    type: 'abort-session',
+    sessionId: selectedSession.value.id,
+    provider: 'claude',
+  })
 }
 
 function toggleMicrophone() {
@@ -193,6 +207,7 @@ defineExpose({
         <template v-for="(msg, index) in convertedMessages" :key="msg?.uuid || index">
           <ChatInterface :message="msg" :prevMessage="index > 0 ? convertedMessages[index - 1] : null" :index="index" :createDiff="createDiff" />
         </template>
+        <t-empty v-if="!convertedMessages?.length" :title="'暂无数据'"></t-empty>
         <!-- <ThinkingMessage v-if="isLoading" /> -->
       </ConversationContent>
       <ConversationScrollButton ref="ConversationScrollButtonRef" />
@@ -214,6 +229,7 @@ defineExpose({
 
           <PromptInputFooter>
             <PromptInputTools>
+              <permissionModeSelector v-model:mode="permissionMode" />
               <PromptInputActionMenu>
                 <PromptInputActionMenuTrigger />
                 <PromptInputActionMenuContent>
@@ -232,7 +248,10 @@ defineExpose({
               </PromptInputButton>
             </PromptInputTools>
 
-            <PromptInputSubmit :disabled="status === 'streaming'" :status="status" />
+            <div class="flex gap-2">
+              <PromptInputSubmit :disabled="status === 'streaming'" :status="status" />
+              <t-button variant="outline" theme="danger" @click="abortSession">停止对话</t-button>
+            </div>
           </PromptInputFooter>
         </PromptInput>
       </div>

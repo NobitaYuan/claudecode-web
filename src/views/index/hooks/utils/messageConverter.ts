@@ -54,7 +54,7 @@ export const convertSessionMessages = (rawMessages: RawSessionMessage[]): Messag
       }
     }
   }
-  console.log('userToolResults', userToolResults)
+  // console.log('userToolResults', userToolResults)
 
   // ============================================================
   // 第二遍遍历：处理消息并附加工具结果
@@ -228,11 +228,4 @@ export const convertSessionMessages = (rawMessages: RawSessionMessage[]): Messag
   }
 
   return converted
-}
-
-/**
- * 类型守卫：判断是否为工具调用消息
- */
-function isToolUseMessage(message: Message): message is ToolUseMessage {
-  return message.type === 'assistant' && 'isToolUse' in message && (message as ToolUseMessage).isToolUse === true
 }
