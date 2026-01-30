@@ -1,4 +1,5 @@
 import { Project } from '../types'
+import { RawSessionMessage } from './utils/message'
 
 /**
  * WebSocket 消息类型定义
@@ -26,10 +27,53 @@ export interface ProjectsUpdatedMessage extends WebSocketMessage {
   changedFile?: string
 }
 
+/** 结束消息 */
+export interface msgEnding extends WebSocketMessage {
+  type: 'claude-complete'
+  sessionId: string
+  exitCode: number
+  isNewSession: boolean
+}
+
+/** 权限请求 */
+export interface claudePermissionRequest extends WebSocketMessage {
+  /*     "type": "claude-permission-request",
+    "requestId": "13ba5b6b-b80b-4d9a-a1af-2a9d94f47df9",
+    "toolName": "AskUserQuestion",
+    "input": {
+    },
+    "sessionId": "830cfee5-42fd-436f-948d-5b5ffe009fca" */
+  type: 'claude-permission-request'
+  requestId: string
+  toolName: string
+  sessionId: string
+  input: any
+  isCancel: boolean
+}
+
+/** 权限取消 */
+export interface claudePermissionCancel extends WebSocketMessage {
+  /*  {
+    "type": "claude-permission-cancelled",
+    "requestId": "13ba5b6b-b80b-4d9a-a1af-2a9d94f47df9",
+    "reason": "timeout",
+    "sessionId": "830cfee5-42fd-436f-948d-5b5ffe009fca"
+} */
+  type: 'claude-permission-cancelled'
+  requestId: string
+  reason: string
+  sessionId: string
+}
+
+/** 消息响应 */
+export interface claudeResponse extends WebSocketMessage, RawSessionMessage {
+  type: 'claude-response'
+}
+
 /**
  * 联合消息类型
  */
-export type WsMessage = LoadingProgressMessage | ProjectsUpdatedMessage
+export type WsMessage = LoadingProgressMessage | ProjectsUpdatedMessage | msgEnding | claudePermissionRequest | claudePermissionCancel | claudeResponse
 
 /**
  * 加载进度状态

@@ -132,50 +132,50 @@ export const convertSessionMessages = (rawMessages: RawSessionMessage[]): Messag
             const toolResult = userToolResults.get(part.id!)
             // console.log('toolResult', toolResult)
             // 交互式工具
-            if (part.name === 'AskUserQuestion') {
-              converted.push({
-                uuid: msg.uuid,
-                type: 'assistant',
-                content: '',
-                timestamp: msg.timestamp || new Date().toISOString(),
-                isToolUse: true,
-                isInteractivePrompt: part.name === 'AskUserQuestion', // 判断是否为交互式
-                toolName: part.name,
-                toolInput: JSON.stringify(part.input),
-                toolId: part.tool_use_id,
-                toolResult: toolResult
-                  ? {
-                      content: typeof toolResult.content === 'string' ? toolResult.content : JSON.stringify(toolResult.content),
-                      isError: toolResult.isError,
-                      toolUseResult: toolResult.toolUseResult,
-                    }
-                  : undefined,
-                toolError: toolResult?.isError || false,
-                toolResultTimestamp: toolResult?.timestamp || new Date(),
-              } as ToolUseMessage)
-            }
-            // 其他的工具
-            else {
-              converted.push({
-                uuid: msg.uuid,
-                type: 'assistant',
-                content: '',
-                timestamp: msg.timestamp || new Date().toISOString(),
-                isToolUse: true,
-                toolName: part.name,
-                toolInput: JSON.stringify(part.input),
-                toolId: part.tool_use_id,
-                toolResult: toolResult
-                  ? {
-                      content: typeof toolResult.content === 'string' ? toolResult.content : JSON.stringify(toolResult.content),
-                      isError: toolResult.isError,
-                      toolUseResult: toolResult.toolUseResult,
-                    }
-                  : undefined,
-                toolError: toolResult?.isError || false,
-                toolResultTimestamp: toolResult?.timestamp || new Date(),
-              } as ToolUseMessage)
-            }
+            // if (part.name === 'AskUserQuestion') {
+            //   converted.push({
+            //     uuid: msg.uuid,
+            //     type: 'assistant',
+            //     content: '',
+            //     timestamp: msg.timestamp || new Date().toISOString(),
+            //     isToolUse: true,
+            //     isInteractivePrompt: part.name === 'AskUserQuestion', // 判断是否为交互式
+            //     toolName: part.name,
+            //     toolInput: JSON.stringify(part.input),
+            //     toolId: part.tool_use_id,
+            //     toolResult: toolResult
+            //       ? {
+            //           content: typeof toolResult.content === 'string' ? toolResult.content : JSON.stringify(toolResult.content),
+            //           isError: toolResult.isError,
+            //           toolUseResult: toolResult.toolUseResult,
+            //         }
+            //       : undefined,
+            //     toolError: toolResult?.isError || false,
+            //     toolResultTimestamp: toolResult?.timestamp || new Date(),
+            //   } as ToolUseMessage)
+            // }
+            // // 其他的工具
+            // else {
+            converted.push({
+              uuid: msg.uuid,
+              type: 'assistant',
+              content: '',
+              timestamp: msg.timestamp || new Date().toISOString(),
+              isToolUse: true,
+              toolName: part.name,
+              toolInput: JSON.stringify(part.input),
+              toolId: part.tool_use_id,
+              toolResult: toolResult
+                ? {
+                    content: typeof toolResult.content === 'string' ? toolResult.content : JSON.stringify(toolResult.content),
+                    isError: toolResult.isError,
+                    toolUseResult: toolResult.toolUseResult,
+                  }
+                : undefined,
+              toolError: toolResult?.isError || false,
+              toolResultTimestamp: toolResult?.timestamp || new Date(),
+            } as ToolUseMessage)
+            // }
           }
           // 工具调用结果
           else if (part.type === 'tool_result') {

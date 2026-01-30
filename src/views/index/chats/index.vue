@@ -20,12 +20,15 @@ import {
 import { GlobeIcon, MicIcon } from 'lucide-vue-next'
 import { useChat } from '../hooks/useChat'
 import ChatInterface from './components/ChatInterface.vue'
-// import ThinkingMessage from './components/ThinkingMessage.vue'
+import ThinkingMessage from './components/thinkingStatus.vue'
 import { useCreateDiff } from './utils/createDiff'
 import { useWebSocket } from '../hooks/useWebSocket'
 import { Message } from '../hooks/utils/message'
 import permissionModeSelector from './components/permissionModeSelector.vue'
 import { useLocalStorage } from '@vueuse/core'
+import { useClaudePermission } from '../hooks/useClaudePermission'
+import questionSelecterDialog from './components/questionSelecterDialog.vue'
+import permissionDecision from './components/permissionDecision.vue'
 
 const thinkingModes = [
   {
@@ -67,6 +70,7 @@ const thinkingModes = [
 
 const { convertedMessages, selectedProject, selectedSession } = useChat()
 const { sendMessage, isLoading } = useWebSocket()
+const { cancelAllPermission } = useClaudePermission()
 
 /** 是否使用联网搜索 */
 const useWebSearch = ref(false)
@@ -147,6 +151,7 @@ function addUserMessage(content: string) {
   }
   console.log('msg', msg)
   sendMessage(msg)
+  isLoading.value = true
 
   // ============================================================
   // 逻辑块 9: 清空输入状态
@@ -173,6 +178,11 @@ function abortSession() {
     sessionId: selectedSession.value.id,
     provider: 'claude',
   })
+  cancelAllPermission()
+}
+
+function sendAnswer(msg: any) {
+  sendMessage(msg)
 }
 
 function toggleMicrophone() {
@@ -208,12 +218,14 @@ defineExpose({
           <ChatInterface :message="msg" :prevMessage="index > 0 ? convertedMessages[index - 1] : null" :index="index" :createDiff="createDiff" />
         </template>
         <t-empty v-if="!convertedMessages?.length" :title="'暂无数据'"></t-empty>
-        <!-- <ThinkingMessage v-if="isLoading" /> -->
+        <ThinkingMessage v-if="isLoading" />
       </ConversationContent>
       <ConversationScrollButton ref="ConversationScrollButtonRef" />
     </Conversation>
 
-    <div class="grid shrink-0 gap-4 pt-4">
+    <div class="grid shrink-0 gap-4 pt-4 relative">
+      <questionSelecterDialog @sendAnswer="sendAnswer" />
+      <permissionDecision @sendAnswer="sendAnswer" />
       <div class="w-full px-4 pb-4">
         <PromptInput class="w-full" multiple global-drop @submit="handleSubmit">
           <!-- <PromptInputHeader> -->
@@ -250,7 +262,7 @@ defineExpose({
 
             <div class="flex gap-2">
               <PromptInputSubmit :disabled="status === 'streaming'" :status="status" />
-              <t-button variant="outline" theme="danger" @click="abortSession">停止对话</t-button>
+              <t-button variant="outline" theme="danger" @click="abortSession" v-if="isLoading">停止对话</t-button>
             </div>
           </PromptInputFooter>
         </PromptInput>

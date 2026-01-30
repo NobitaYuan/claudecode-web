@@ -2,7 +2,7 @@
 import { SplitterGroup, SplitterPanel, SplitterResizeHandle } from 'reka-ui'
 import { useChat } from './hooks/useChat'
 import { useWebSocket } from './hooks/useWebSocket'
-import { useWebSocketMessageHandler } from './hooks/useWebSocketMessageHandler'
+import { useWebSocketMessageHandler } from './hooks/useWSMessageHandler'
 import sidebar from './components/sidebar.vue'
 import chatView from './chats/index.vue'
 

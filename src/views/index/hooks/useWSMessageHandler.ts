@@ -1,5 +1,8 @@
+import { MessagePlugin } from 'tdesign-vue-next'
 import { useChat } from './useChat'
+import { useClaudePermission } from './useClaudePermission'
 import { LoadingProgressMessage, ProjectsUpdatedMessage, useWebSocket } from './useWebSocket'
+import { convertSessionMessages } from './utils/messageConverter'
 
 /**
  * useWebSocketMessageHandler Composable
@@ -12,9 +15,11 @@ import { LoadingProgressMessage, ProjectsUpdatedMessage, useWebSocket } from './
  * @returns WebSocket 消息处理状态和方法
  */
 export function useWebSocketMessageHandler() {
-  const { wsMessages, loadingProgress, loadingProgressTimeout } = useWebSocket()
+  const { wsMessages, loadingProgress, loadingProgressTimeout, isLoading } = useWebSocket()
 
-  const { projects, selectedProject, selectedSession, getMessages } = useChat()
+  const { projects, selectedProject, selectedSession, convertedMessages, getMessages } = useChat()
+
+  const { claudePermissionMap, addPermissionMap, cancelPermission } = useClaudePermission()
 
   // ============================================================
   // 处理加载进度消息
@@ -97,6 +102,7 @@ export function useWebSocketMessageHandler() {
     (newMessages) => {
       if (!newMessages?.length) return
       const latestMessage = newMessages[newMessages.length - 1]
+
       // ========================================================
       // 分支1: 处理加载进度消息
       // ========================================================
@@ -107,9 +113,32 @@ export function useWebSocketMessageHandler() {
       // ========================================================
       // 分支2: 处理项目更新消息
       // ========================================================
-      if (latestMessage.type === 'projects_updated') {
+      else if (latestMessage.type === 'projects_updated') {
+        console.log('latestMessage', latestMessage)
         handleProjectsUpdate(latestMessage as ProjectsUpdatedMessage)
       }
+      // ========================================================
+      // 分支3: 消息响应
+      // ========================================================
+      else if (latestMessage.type === 'claude-response') {
+        console.log('latestMessage', latestMessage)
+        convertedMessages.value = [...convertedMessages.value, ...convertSessionMessages([latestMessage])]
+        // getMessages()
+      }
+      // 对话结束
+      else if (latestMessage.type === 'claude-complete') {
+        isLoading.value = false
+      }
+      // 权限请求
+      else if (latestMessage.type === 'claude-permission-request') {
+        MessagePlugin.warning('Claude请求批准！')
+        addPermissionMap(latestMessage)
+      }
+      // 权限取消
+      else if (latestMessage.type === 'claude-permission-cancelled') {
+        cancelPermission(latestMessage)
+      }
+      console.log('claudePermissionMap', claudePermissionMap.value)
     },
     { deep: true },
   )
