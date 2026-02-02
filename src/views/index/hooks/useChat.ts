@@ -88,6 +88,8 @@ const getMessages = async () => {
   try {
     messageLoading.value = true
     const res = await api.sessionMessages(selectedProject.value.name, selectedSession.value.id, 40, currentOffset.value)
+    if (res.redirected) return
+    if (res.type === 'cors') return
     if (!res.ok) {
       MessagePlugin.error('请求对话失败！')
       return
@@ -105,11 +107,24 @@ const getMessages = async () => {
 /*
  *会话点击事件
  */
-const handleSessionClick = (project: Project, session: Session) => {
+const handleSessionClick = (project: Project, session: Session, isFetch: boolean = true) => {
   selectedSession.value = session
   selectedProject.value = project
-  getMessages()
+  if (isFetch) {
+    getMessages()
+  }
   console.log('project', project)
+}
+
+/** 是否在新建会话 */
+const isNewSessioning = ref(false)
+/** 新建会话 */
+const newSession = (project: Project) => {
+  selectedProject.value = project
+  isNewSessioning.value = true
+  selectedSession.value = null
+  rawMessages.value = []
+  convertedMessages.value = []
 }
 
 export const useChat = () => {
@@ -126,6 +141,8 @@ export const useChat = () => {
     selectedSession,
     getMessages,
     handleSessionClick,
+    isNewSessioning,
+    newSession,
   }
 }
 

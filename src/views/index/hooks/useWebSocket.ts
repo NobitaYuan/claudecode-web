@@ -68,12 +68,30 @@ export interface claudePermissionCancel extends WebSocketMessage {
 /** 消息响应 */
 export interface claudeResponse extends WebSocketMessage, RawSessionMessage {
   type: 'claude-response'
+  data: {
+    type?: string
+    subtype?: string
+    session_id?: string
+  }
+}
+
+/** 会话创建成功 */
+export interface sessionCreated extends WebSocketMessage {
+  type: 'session-created'
+  sessionId: string
 }
 
 /**
  * 联合消息类型
  */
-export type WsMessage = LoadingProgressMessage | ProjectsUpdatedMessage | msgEnding | claudePermissionRequest | claudePermissionCancel | claudeResponse
+export type WsMessage =
+  | LoadingProgressMessage
+  | ProjectsUpdatedMessage
+  | msgEnding
+  | claudePermissionRequest
+  | claudePermissionCancel
+  | claudeResponse
+  | sessionCreated
 
 /**
  * 加载进度状态

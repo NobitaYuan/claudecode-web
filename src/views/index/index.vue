@@ -5,12 +5,21 @@ import { useWebSocket } from './hooks/useWebSocket'
 import { useWebSocketMessageHandler } from './hooks/useWSMessageHandler'
 import sidebar from './components/sidebar.vue'
 import chatView from './chats/index.vue'
+import newProjectDialog from './components/newProjectDialog.vue'
+import { Project } from './types'
 
-const { getProjects, rawMessages } = useChat()
+const showDialog = ref(false)
+
+const { getProjects, rawMessages, isNewSessioning, handleSessionClick } = useChat()
 
 const { connect } = useWebSocket()
 
 useWebSocketMessageHandler()
+
+const onCreated = (data: Project) => {
+  handleSessionClick(data, null, false)
+  getProjects()
+}
 
 onMounted(async () => {
   await getProjects()
@@ -23,7 +32,7 @@ onMounted(async () => {
     <SplitterGroup :direction="'horizontal'" auto-save-id="splitter-index">
       <SplitterPanel :min-size="10">
         <!-- 左侧边栏 -->
-        <sidebar />
+        <sidebar @add="showDialog = true" />
       </SplitterPanel>
       <SplitterResizeHandle>
         <div class="resizeLine"></div>
@@ -31,15 +40,14 @@ onMounted(async () => {
       <SplitterPanel :min-size="10" class="right">
         <!-- 右侧内容区 -->
         <div class="right">
+          <chatView v-if="isNewSessioning || rawMessages?.length" />
           <div class="welcome_container" v-if="!rawMessages?.length">
-            <t-empty status="info" title="欢迎使用 Claude Code Web">
-              <p class="welcome_text">请从左侧选择一个会话开始</p>
-            </t-empty>
+            <t-empty status="info" title="欢迎使用 Claude Code On Web" description="请从左侧选择一个会话开始"> </t-empty>
           </div>
-          <chatView v-else />
         </div>
       </SplitterPanel>
     </SplitterGroup>
+    <newProjectDialog v-if="showDialog" @close="showDialog = false" @created="onCreated" />
   </div>
 </template>
 

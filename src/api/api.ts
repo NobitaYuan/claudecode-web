@@ -1,3 +1,5 @@
+import { APIConfig } from './type'
+
 // Utility function for authenticated API calls
 export const authenticatedFetch = (url: RequestInfo | URL, options: Record<string, any> = {}) => {
   const isPlatform = import.meta.env.VITE_IS_PLATFORM === 'true'
@@ -89,11 +91,16 @@ export const api = {
       method: 'POST',
       body: JSON.stringify({ path }),
     }),
-  createWorkspace: (workspaceData: any) =>
+  createFolder: (folderPath: string): Promise<Response> =>
+    authenticatedFetch('/api/create-folder', {
+      method: 'POST',
+      body: JSON.stringify({ path: folderPath }),
+    } as APIConfig),
+  createWorkspace: (workspaceData: { workspaceType: string; path: string }): Promise<Response> =>
     authenticatedFetch('/api/projects/create-workspace', {
       method: 'POST',
       body: JSON.stringify(workspaceData),
-    }),
+    } as APIConfig),
   readFile: (projectName: any, filePath: string | number | boolean) =>
     authenticatedFetch(`/api/projects/${projectName}/file?filePath=${encodeURIComponent(filePath)}`),
   saveFile: (projectName: any, filePath: any, content: any) =>

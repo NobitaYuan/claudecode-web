@@ -2,18 +2,37 @@
 import { formatLastActivity } from '@/utils/tools'
 import { useChat } from '../hooks/useChat'
 
+const emit = defineEmits(['add'])
+
 const activeProjects = ref<string[]>([])
-const { filteredProjects, searchValue, projectLoading, sortBy, selectedProject, selectedSession, handleSessionClick } = useChat()
+const { getProjects, projects, filteredProjects, searchValue, projectLoading, sortBy, selectedProject, selectedSession, handleSessionClick, newSession } =
+  useChat()
+
+const reloadPro = () => {
+  searchValue.value = ''
+  projects.value = []
+  getProjects()
+}
 </script>
 
 <template>
   <div class="chat_sidebar">
+    <div class="flex gap-2 items-center p-[12px]">
+      <t-button block @click="emit('add')">
+        <div class="flex items-center gap-2">
+          <t-icon name="folder-add-1" />
+          新建项目
+        </div>
+      </t-button>
+      <t-link hover="color" @click="reloadPro">
+        <t-icon name="refresh" />
+      </t-link>
+    </div>
     <t-input v-model="searchValue" placeholder="搜索项目或会话..." clearable class="search_input">
       <template #prefix-icon>
         <t-icon name="search" />
       </template>
     </t-input>
-
     <div class="filter_container">
       <div class="filter_label">排序方式</div>
       <t-radio-group v-model="sortBy" variant="default-filled">
@@ -24,7 +43,7 @@ const { filteredProjects, searchValue, projectLoading, sortBy, selectedProject, 
     </div>
 
     <div v-if="filteredProjects.length === 0" class="empty_container">
-      <t-empty description="暂无项目" />
+      <t-empty title="暂无项目" />
     </div>
 
     <div v-else class="projects_list">
@@ -78,7 +97,15 @@ const { filteredProjects, searchValue, projectLoading, sortBy, selectedProject, 
               </div>
 
               <div v-if="!project.sessions || project.sessions.length === 0" class="no_sessions">
-                <t-empty description="暂无会话" size="small" />
+                <span>暂无会话</span>
+              </div>
+              <div class="pr-[24px]">
+                <t-button block size="small" @click="newSession(project)">
+                  <div class="flex items-center">
+                    <t-icon name="add"></t-icon>
+                    新建会话
+                  </div>
+                </t-button>
               </div>
             </div>
           </template>
@@ -100,9 +127,9 @@ const { filteredProjects, searchValue, projectLoading, sortBy, selectedProject, 
   background-color: var(--td-bg-color-container);
 
   .search_input {
-    margin-bottom: 8px;
     flex-shrink: 0;
     padding: 12px;
+    padding-top: 4px;
   }
 
   .filter_container {
@@ -277,7 +304,7 @@ const { filteredProjects, searchValue, projectLoading, sortBy, selectedProject, 
         }
 
         .no_sessions {
-          padding: 20px 0;
+          padding-left: 12px;
         }
       }
     }

@@ -27,8 +27,9 @@ import { Message } from '../hooks/utils/message'
 import permissionModeSelector from './components/permissionModeSelector.vue'
 import { useLocalStorage } from '@vueuse/core'
 import { useClaudePermission } from '../hooks/useClaudePermission'
-import questionSelecterDialog from './components/questionSelecterDialog.vue'
+import permissionQuestion from './components/permissionQuestion.vue'
 import permissionDecision from './components/permissionDecision.vue'
+import permissionBash from './components/permissionBash.vue'
 
 const thinkingModes = [
   {
@@ -143,7 +144,7 @@ function addUserMessage(content: string) {
     options: {
       projectPath: selectedProject.value?.path,
       cwd: selectedProject.value?.fullPath,
-      sessionId: selectedSession.value.id,
+      sessionId: selectedSession.value?.id || null,
       resume: !!selectedSession.value,
       permissionMode: permissionMode.value, // ['default', 'acceptEdits', 'bypassPermissions', 'plan']
       model: 'sonnet',
@@ -179,6 +180,7 @@ function abortSession() {
     provider: 'claude',
   })
   cancelAllPermission()
+  isLoading.value = true
 }
 
 function sendAnswer(msg: any) {
@@ -217,15 +219,19 @@ defineExpose({
         <template v-for="(msg, index) in convertedMessages" :key="msg?.uuid || index">
           <ChatInterface :message="msg" :prevMessage="index > 0 ? convertedMessages[index - 1] : null" :index="index" :createDiff="createDiff" />
         </template>
-        <t-empty v-if="!convertedMessages?.length" :title="'暂无数据'"></t-empty>
-        <ThinkingMessage v-if="isLoading" />
+        <t-empty clas="mt-[10vh]" v-if="!convertedMessages?.length" :title="'请输入内容以开始会话'"></t-empty>
       </ConversationContent>
       <ConversationScrollButton ref="ConversationScrollButtonRef" />
     </Conversation>
 
     <div class="grid shrink-0 gap-4 pt-4 relative">
-      <questionSelecterDialog @sendAnswer="sendAnswer" />
+      <permissionQuestion @sendAnswer="sendAnswer" />
       <permissionDecision @sendAnswer="sendAnswer" />
+      <permissionBash @sendAnswer="sendAnswer" />
+      <div class="status flex justify-between px-5" v-if="isLoading">
+        <ThinkingMessage />
+        <t-button variant="outline" theme="danger" @click="abortSession">停止对话</t-button>
+      </div>
       <div class="w-full px-4 pb-4">
         <PromptInput class="w-full" multiple global-drop @submit="handleSubmit">
           <!-- <PromptInputHeader> -->
@@ -261,8 +267,7 @@ defineExpose({
             </PromptInputTools>
 
             <div class="flex gap-2">
-              <PromptInputSubmit :disabled="status === 'streaming'" :status="status" />
-              <t-button variant="outline" theme="danger" @click="abortSession" v-if="isLoading">停止对话</t-button>
+              <PromptInputSubmit :disabled="status === 'streaming'" :status="'ready'" />
             </div>
           </PromptInputFooter>
         </PromptInput>

@@ -2,7 +2,9 @@ import { MessagePlugin } from 'tdesign-vue-next'
 import { useChat } from './useChat'
 import { useClaudePermission } from './useClaudePermission'
 import { LoadingProgressMessage, ProjectsUpdatedMessage, useWebSocket } from './useWebSocket'
-import { convertSessionMessages } from './utils/messageConverter'
+import { Session } from '../types'
+import { groupLog } from '@/utils/tools'
+import debounce from 'lodash.debounce'
 
 /**
  * useWebSocketMessageHandler Composable
@@ -15,11 +17,13 @@ import { convertSessionMessages } from './utils/messageConverter'
  * @returns WebSocket 消息处理状态和方法
  */
 export function useWebSocketMessageHandler() {
-  const { wsMessages, loadingProgress, loadingProgressTimeout, isLoading } = useWebSocket()
+  const { wsMessages, loadingProgress, loadingProgressTimeout, isLoading, sendMessage } = useWebSocket()
 
-  const { projects, selectedProject, selectedSession, convertedMessages, getMessages } = useChat()
+  const { projects, selectedProject, selectedSession, isNewSessioning, getMessages, handleSessionClick } = useChat()
 
   const { claudePermissionMap, addPermissionMap, cancelPermission } = useClaudePermission()
+
+  const debounceGetMsg = debounce(getMessages, 1000)
 
   // ============================================================
   // 处理加载进度消息
@@ -68,7 +72,7 @@ export function useWebSocketMessageHandler() {
         // Check if this is the currently-selected session
         if (changedSessionId === selectedSession.value.id) {
           // 更新消息
-          getMessages()
+          debounceGetMsg()
         }
       }
     }
@@ -114,31 +118,49 @@ export function useWebSocketMessageHandler() {
       // 分支2: 处理项目更新消息
       // ========================================================
       else if (latestMessage.type === 'projects_updated') {
-        console.log('latestMessage', latestMessage)
+        groupLog('projects_updated', latestMessage)
         handleProjectsUpdate(latestMessage as ProjectsUpdatedMessage)
+        if (isNewSessioning.value && selectedSession.value?.id) {
+          sendMessage({
+            type: 'check-session-status',
+            provider: 'claude',
+            sessionId: selectedSession.value?.id,
+          })
+        }
       }
       // ========================================================
       // 分支3: 消息响应
       // ========================================================
       else if (latestMessage.type === 'claude-response') {
-        console.log('latestMessage', latestMessage)
-        convertedMessages.value = [...convertedMessages.value, ...convertSessionMessages([latestMessage])]
-        // getMessages()
+        groupLog('claude-response', latestMessage)
+
+        // 创建会话成功，刷新列表
+        if (latestMessage.data.type === 'system' && latestMessage.data.subtype === 'init' && latestMessage.data.session_id) {
+          handleSessionClick(selectedProject.value, { id: latestMessage.data.session_id } as Session)
+          isNewSessioning.value = false
+        }
+        debounceGetMsg()
       }
       // 对话结束
       else if (latestMessage.type === 'claude-complete') {
         isLoading.value = false
+        debounceGetMsg()
       }
       // 权限请求
       else if (latestMessage.type === 'claude-permission-request') {
-        MessagePlugin.warning('Claude请求批准！')
+        MessagePlugin.warning('Claude请求批准！，' + latestMessage?.toolName)
         addPermissionMap(latestMessage)
       }
       // 权限取消
       else if (latestMessage.type === 'claude-permission-cancelled') {
         cancelPermission(latestMessage)
       }
-      console.log('claudePermissionMap', claudePermissionMap.value)
+      // 创建会话成功
+      else if (latestMessage.type === 'session-created') {
+        groupLog('latestMessage', latestMessage)
+        handleSessionClick(selectedProject.value, { id: latestMessage.sessionId } as Session, false)
+      }
+      // console.log('claudePermissionMap', claudePermissionMap.value)
     },
     { deep: true },
   )
