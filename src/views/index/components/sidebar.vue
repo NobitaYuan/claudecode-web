@@ -5,8 +5,19 @@ import { useChat } from '../hooks/useChat'
 const emit = defineEmits(['add'])
 
 const activeProjects = ref<string[]>([])
-const { getProjects, projects, filteredProjects, searchValue, projectLoading, sortBy, selectedProject, selectedSession, handleSessionClick, newSession } =
-  useChat()
+const {
+  getProjects,
+  delSession,
+  projects,
+  filteredProjects,
+  searchValue,
+  projectLoading,
+  sortBy,
+  selectedProject,
+  selectedSession,
+  handleSessionClick,
+  newSession,
+} = useChat()
 
 const reloadPro = () => {
   searchValue.value = ''
@@ -92,8 +103,13 @@ const reloadPro = () => {
                 </div>
                 <div class="session_time">
                   {{ formatLastActivity(session.lastActivity) }}
-                  <t-tag theme="success" size="small" variant="outline"> {{ session.messageCount }}条消息 </t-tag>
+                  <t-tag class="tag" theme="success" size="small" variant="outline"> {{ session.messageCount }}条消息 </t-tag>
                 </div>
+                <button class="del w-6 h-6 bg-red-50 hover:bg-red-100 dark:bg-red-900/20 dark:hover:bg-red-900/40 rounded flex items-center justify-center">
+                  <t-link @click.stop="delSession(project.name, session.id)" theme="danger" hover="color">
+                    <t-icon name="delete" size="16px" />
+                  </t-link>
+                </button>
               </div>
 
               <div v-if="!project.sessions || project.sessions.length === 0" class="no_sessions">
@@ -254,18 +270,27 @@ const reloadPro = () => {
       .sessions_list {
         display: flex;
         flex-direction: column;
-        gap: 8px;
+        gap: 4px;
 
         .session_item {
-          padding: 8px 8px;
+          padding: 4px 8px;
           border-radius: 4px;
           cursor: pointer;
           transition: all 0.2s;
           margin-bottom: 4px;
           border: 1px solid transparent;
+          position: relative;
 
           &:hover {
             background-color: var(--td-bg-color-container-hover);
+            .session_time {
+              .tag {
+                display: none;
+              }
+            }
+            .del {
+              display: flex;
+            }
           }
 
           &.active {
@@ -277,7 +302,6 @@ const reloadPro = () => {
             justify-content: space-between;
             align-items: flex-start;
             gap: 8px;
-            margin-bottom: 4px;
 
             .session_summary {
               flex: 1;
@@ -300,6 +324,12 @@ const reloadPro = () => {
             font-weight: 400;
             display: flex;
             justify-content: space-between;
+          }
+          .del {
+            position: absolute;
+            display: none;
+            right: 12px;
+            bottom: 10px;
           }
         }
 

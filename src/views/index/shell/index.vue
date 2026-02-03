@@ -177,12 +177,13 @@ const connectWebSocket = async (): Promise<void> => {
 // 初始化消息
 const initMsg = () => {
   if (!ws.value) return
+
   ws.value?.send(
     JSON.stringify({
       type: 'init',
       projectPath: props.selectedProject?.fullPath || props.selectedProject?.path,
       sessionId: props.isPlainShell ? null : props.selectedSession?.id,
-      hasSession: props.isPlainShell ? false : true,
+      hasSession: props.isPlainShell ? false : Boolean(props.selectedSession?.id),
       provider: props.isPlainShell ? 'plain-shell' : props.selectedSession?.__provider || 'claude',
       cols: terminal.value.cols,
       rows: terminal.value.rows,
@@ -389,16 +390,17 @@ const init = () => {
   connectWebSocket()
 }
 
-onMounted(() => {
-  init()
-})
-
 watch(
   () => props.selectedSession,
   () => {
-    initMsg()
+    disconnectFromShell()
+    connectWebSocket()
   },
 )
+
+onMounted(() => {
+  init()
+})
 
 onUnmounted(() => {
   disconnectFromShell()

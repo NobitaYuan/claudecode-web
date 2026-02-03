@@ -1,5 +1,5 @@
 import { api } from '@/api/api'
-import { MessagePlugin } from 'tdesign-vue-next'
+import { DialogPlugin, MessagePlugin } from 'tdesign-vue-next'
 import { Project, Session } from '../types'
 import { Message, RawSessionMessage } from './utils/message'
 import { convertSessionMessages } from './utils/messageConverter'
@@ -74,7 +74,7 @@ const convertedMessages = ref<Message[]>([])
 const messageLoading = ref(false)
 
 /**
- * 获取对话
+ * 获取会话 对话
  */
 const getMessages = async () => {
   if (!selectedProject.value) {
@@ -104,6 +104,7 @@ const getMessages = async () => {
     messageLoading.value = false
   }
 }
+
 /*
  *会话点击事件
  */
@@ -122,9 +123,34 @@ const isNewSessioning = ref(false)
 const newSession = (project: Project) => {
   selectedProject.value = project
   isNewSessioning.value = true
+  clearSessionData()
+}
+/** 清理会话 */
+const clearSessionData = () => {
   selectedSession.value = null
   rawMessages.value = []
   convertedMessages.value = []
+}
+// 删除会话列表
+const delSession = async (name: string, id: string) => {
+  const incetance = DialogPlugin.confirm({
+    header: '提示',
+    body: '确认永久删除该会话？',
+    onConfirm: async () => {
+      try {
+        projectLoading.value = true
+        await api.deleteSession(name, id)
+        incetance.destroy()
+        // 如果删除的是当前选中的，则清理会话
+        if (id === selectedSession.value?.id) {
+          clearSessionData()
+        }
+        await getProjects()
+      } finally {
+        projectLoading.value = false
+      }
+    },
+  })
 }
 
 export const useChat = () => {
@@ -135,6 +161,7 @@ export const useChat = () => {
     searchValue,
     sortBy,
     getProjects,
+    delSession,
     selectedProject,
     rawMessages,
     convertedMessages,
