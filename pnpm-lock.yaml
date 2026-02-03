@@ -13,9 +13,6 @@ importers:
       '@dagrejs/dagre':
         specifier: ^1.1.8
         version: 1.1.8
-      '@microsoft/fetch-event-source':
-        specifier: ^2.0.1
-        version: 2.0.1
       '@vitejs/plugin-vue-jsx':
         specifier: ^5.1.1
         version: 5.1.1(rolldown-vite@7.2.5(@types/node@24.0.1)(esbuild@0.25.5)(jiti@2.4.2)(sass@1.89.2)(terser@5.42.0)(yaml@2.8.0))(vue@3.5.16(typescript@5.8.3))
@@ -717,9 +714,6 @@ packages:
 
   '@jridgewell/trace-mapping@0.3.31':
     resolution: { integrity: sha512-zzNR+SdQSDJzc8joaeP8QQoCQr8NuYx2dIIytl1QeBEZHJ9uW6hebsrYgbz8hJwUQao3TWCMtmfV8Nu1twOLAw== }
-
-  '@microsoft/fetch-event-source@2.0.1':
-    resolution: { integrity: sha512-W6CLUJ2eBMw3Rec70qrsEW0jOm/3twwJv21mrmj2yORiaVmVYGS4sSS5yUwvQc1ZlDLYGPnClVWmUUMagKNsfA== }
 
   '@napi-rs/wasm-runtime@1.0.7':
     resolution: { integrity: sha512-SeDnOO0Tk7Okiq6DbXmmBODgOAb9dp9gjlphokTUxmt8U3liIP1ZsozBahH69j/RJv+Rfs6IwUKHTgQYJ/HBAw== }
@@ -4344,8 +4338,6 @@ snapshots:
     dependencies:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.5.0
-
-  '@microsoft/fetch-event-source@2.0.1': {}
 
   '@napi-rs/wasm-runtime@1.0.7':
     dependencies:

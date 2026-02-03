@@ -1,8 +1,11 @@
-# Claude Code on Web
+<h1 align="center">
+  <a href="https://github.com/NobitaYuan/claudecode-on-web" target="_blank">Claude Code on Web</a>
+</h1>
 
 <div align="center">
 
-一个功能完整的 Claude Code Web 客户端，提供现代化的 AI 编程助手体验
+顾名思义，让你的Calude code 运行在Web！
+访问便捷、交互友好、异地掌控
 
 [![Vue](https://img.shields.io/badge/Vue-3.5-42b883?logo=vue.js)](https://vuejs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.8-3178c6?logo=typescript)](https://www.typescriptlang.org/)
@@ -10,6 +13,8 @@
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
 <img src="./example.png" alt="example" width="100%">
+<hr/>
+<img src="./example2.png" alt="example" width="100%">
 
 </div>
 
@@ -19,7 +24,6 @@
 - 💬 **实时对话** - WebSocket 支持的流式响应
 - 🖥️ **Web 终端** - 集成 xterm.js 的 Shell 终端
 - 🛠️ **工具调用支持** - 完整的工具使用和结果展示
-- 📈 **数据可视化** - ECharts 图表展示
 - 🎨 **现代化 UI** - 基于 TDesign 和 Tailwind CSS
 - 🌗 **暗色模式** - 支持深色/浅色主题切换
 - 🎯 **类型安全** - 完整的 TypeScript 类型定义
@@ -64,24 +68,12 @@
   - @xterm/addon-fit - 自适应大小
   - @xterm/addon-web-links - 链接支持
   - @xterm/addon-webgl - WebGL 渲染加速
-- **@vue-flow/core** - 流程图组件
-- **@vue-flow/background** - 流程图背景
-- **@vue-flow/controls** - 流程图控制
-- **@vue-flow/node-toolbar** - 节点工具栏
-- **@dagrejs/dagre** - 图布局算法
-- **ECharts** - 数据可视化
 
 ### 工具库
 
 - **Axios** - HTTP 请求
 - **VueUse** - Vue Composition API 工具集
-- **@microsoft/fetch-event-source** - Fetch API SSE 支持
-- **Nanoid** - 唯一 ID 生成
-- **Lodash** - JavaScript 工具库
-- **NProgress** - 进度条
-- **vue-stick-to-bottom** - 自动滚动到底部
 - **version-polling** - 版本轮询
-- **embla-carousel-vue** - 轮播组件
 
 ### 开发工具
 
@@ -328,7 +320,6 @@ pnpm preview
 
 - 自动更新检测
 - 暗色模式切换
-- 国际化支持
 - 响应式设计
 - 加载动画
 - 进度条提示
@@ -401,46 +392,6 @@ const count = ref(0)
 const doubled = computed(() => count.value * 2)
 </script>
 ```
-
-### 路由配置
-
-路由配置文件：`src/router/index.ts`
-
-```typescript
-const routes: RouteRecordRaw[] = [
-  {
-    path: '/',
-    name: '/',
-    redirect: '/index',
-  },
-  {
-    path: '/index',
-    name: 'index',
-    meta: { title: 'Taco' },
-    component: () => import('@/views/index/index.vue'),
-  },
-  // ...
-]
-```
-
-### 状态管理
-
-使用 Pinia 进行状态管理，支持持久化：
-
-```typescript
-// stores/useUserStore/index.ts
-import { defineStore } from 'pinia'
-
-export const useUserStore = defineStore('user', {
-  state: () => ({
-    token: '',
-    userInfo: null,
-  }),
-  persist: true, // 持久化存储
-})
-```
-
----
 
 ## 🔐 环境变量说明
 
