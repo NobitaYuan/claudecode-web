@@ -21,7 +21,7 @@ export function useWebSocketMessageHandler() {
 
   const { projects, selectedProject, selectedSession, isNewSessioning, getMessages, handleSessionClick } = useChat()
 
-  const { claudePermissionMap, addPermissionMap, cancelPermission } = useClaudePermission()
+  const { addPermissionMap, cancelPermission } = useClaudePermission()
 
   const debounceGetMsg = debounce(getMessages, 1000)
 
@@ -159,6 +159,10 @@ export function useWebSocketMessageHandler() {
       else if (latestMessage.type === 'session-created') {
         groupLog('latestMessage', latestMessage)
         handleSessionClick(selectedProject.value, { id: latestMessage.sessionId } as Session, false)
+      }
+      // 会话状态
+      else if (latestMessage.type === 'session-status') {
+        handleSessionClick(selectedProject.value, { ...selectedSession.value, id: latestMessage.sessionId } as Session, false)
       }
       // console.log('claudePermissionMap', claudePermissionMap.value)
     },

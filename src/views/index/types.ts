@@ -6,6 +6,8 @@ export interface Session {
   cwd: string
   lastUserMessage: string
   lastAssistantMessage: string
+  __provider?: string
+  name: string
 }
 
 export interface SessionMeta {
@@ -31,3 +33,6 @@ export interface Project {
   taskmaster?: Taskmaster
   isFavorite?: boolean
 }
+
+/** tab切换类型 */
+export type TabKeyType = 'chat' | 'shell' | 'files' | 'git' | 'tasks'

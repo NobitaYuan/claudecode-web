@@ -81,6 +81,13 @@ export interface sessionCreated extends WebSocketMessage {
   sessionId: string
 }
 
+/** 会话状态 */
+export interface sessionStatus extends WebSocketMessage {
+  type: 'session-status'
+  provider: string
+  sessionId: string
+}
+
 /**
  * 联合消息类型
  */
@@ -92,6 +99,7 @@ export type WsMessage =
   | claudePermissionCancel
   | claudeResponse
   | sessionCreated
+  | sessionStatus
 
 /**
  * 加载进度状态

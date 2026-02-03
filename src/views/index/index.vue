@@ -2,18 +2,19 @@
 import { SplitterGroup, SplitterPanel, SplitterResizeHandle } from 'reka-ui'
 import { useChat } from './hooks/useChat'
 import { useWebSocket } from './hooks/useWebSocket'
-import { useWebSocketMessageHandler } from './hooks/useWSMessageHandler'
 import sidebar from './components/sidebar.vue'
 import chatView from './chats/index.vue'
+import shellView from './shell/index.vue'
 import newProjectDialog from './components/newProjectDialog.vue'
-import { Project } from './types'
-
+import { Project, TabKeyType } from './types'
+import tabNavigation from './components/tabNavigation.vue'
+import { useLocalStorage } from '@vueuse/core'
+import { useWebSocketMessageHandler } from './hooks/useWSMessageHandler'
 const showDialog = ref(false)
 
-const { getProjects, rawMessages, isNewSessioning, handleSessionClick } = useChat()
+const { getProjects, rawMessages, isNewSessioning, handleSessionClick, selectedProject, selectedSession } = useChat()
 
 const { connect } = useWebSocket()
-
 useWebSocketMessageHandler()
 
 const onCreated = (data: Project) => {
@@ -21,9 +22,11 @@ const onCreated = (data: Project) => {
   getProjects()
 }
 
+const showTab = useLocalStorage<TabKeyType>('activeTab', 'shell')
+
 onMounted(async () => {
   await getProjects()
-  await connect()
+  connect()
 })
 </script>
 
@@ -40,9 +43,23 @@ onMounted(async () => {
       <SplitterPanel :min-size="10" class="right">
         <!-- 右侧内容区 -->
         <div class="right">
-          <chatView v-if="isNewSessioning || rawMessages?.length" />
-          <div class="welcome_container" v-if="!rawMessages?.length">
-            <t-empty status="info" title="欢迎使用 Claude Code On Web" description="请从左侧选择一个会话开始"> </t-empty>
+          <div class="header">
+            <div class="flex-1">
+              <h1 class="text-sm whitespace-nowrap overflow-x-auto scrollbar-hide font-bold mb-[8px]">{{ selectedSession?.summary }}</h1>
+              <p class="text-xs text-gray-500 dark:text-gray-400 truncate">{{ selectedProject?.displayName }}</p>
+            </div>
+            <div>
+              <tabNavigation v-model="showTab" />
+            </div>
+          </div>
+          <div class="interface">
+            <template v-if="isNewSessioning || rawMessages?.length">
+              <chatView v-if="showTab === 'chat'" />
+              <shellView v-else-if="showTab === 'shell'" :selectedProject="selectedProject" :selectedSession="selectedSession" />
+            </template>
+            <div class="welcome_container" v-else>
+              <t-empty status="info" title="欢迎使用 Claude Code On Web" description="请从左侧选择一个会话开始"> </t-empty>
+            </div>
           </div>
         </div>
       </SplitterPanel>
@@ -59,20 +76,32 @@ onMounted(async () => {
   .right {
     flex: 1;
     height: 100%;
-    overflow-y: auto;
     background-color: var(--td-bg-color-container);
-
-    .welcome_container {
+    display: flex;
+    flex-direction: column;
+    .header {
       display: flex;
       align-items: center;
-      justify-content: center;
-      height: 100%;
-      padding: 40px;
+      justify-content: space-between;
+      padding: 8px 12px 12px 12px;
+      border-bottom: 1px solid hsl(var(--border));
+    }
+    .interface {
+      flex: 1;
+      overflow-y: auto;
+      overflow-x: hidden;
+      .welcome_container {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        padding: 40px;
 
-      .welcome_text {
-        color: var(--td-text-color-secondary);
-        font-size: 14px;
-        margin-top: 16px;
+        .welcome_text {
+          color: var(--td-text-color-secondary);
+          font-size: 14px;
+          margin-top: 16px;
+        }
       }
     }
   }
