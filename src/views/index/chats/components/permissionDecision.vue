@@ -50,10 +50,7 @@ const sendAnswer = (allow: boolean = true) => {
   emit('sendAnswer', {
     type: 'claude-permission-response',
     requestId: curRequest.value.requestId,
-    allow,
-    updatedInput: '同意', // 传递用户选择的答案
-    // message: '',// 拒绝时的原因
-    // rememberEntry: ''  // 可选，记住这次选择的权限条目
+    behavior: allow ? 'allow' : 'deny',
   })
   cancelPermission(curRequest.value)
 }

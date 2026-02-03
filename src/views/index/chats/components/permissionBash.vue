@@ -3,7 +3,7 @@ import { useClaudePermission } from '../../hooks/useClaudePermission'
 import { claudePermissionRequest } from '../../hooks/useWebSocket'
 import { MessageResponse } from '@/components/ai-elements/message'
 const emit = defineEmits(['sendAnswer'])
-
+// https://code.claude.com/docs/zh-CN/hooks#permissionrequest-%E5%86%B3%E7%AD%96%E6%8E%A7%E5%88%B6
 const { claudePermissionMap, cancelPermission } = useClaudePermission()
 
 /*
@@ -51,10 +51,7 @@ const sendAnswer = (allow: boolean = true) => {
   emit('sendAnswer', {
     type: 'claude-permission-response',
     requestId: curRequest.value.requestId,
-    allow,
-    updatedInput: '同意执行', // 传递用户选择的答案
-    // message: '',// 拒绝时的原因
-    // rememberEntry: ''  // 可选，记住这次选择的权限条目
+    behavior: allow ? 'allow' : 'deny',
   })
   cancelPermission(curRequest.value)
 }

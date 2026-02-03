@@ -180,15 +180,16 @@ export type ToolName =
   | 'ApplyPatch'
   | 'AskUserQuestion'
   | 'Skill'
+  | 'WebSearch'
 // 允许其他工具名称
 
 export const toolNameReflect: Record<ToolName, string> = {
-  Read: '读取',
-  Write: '写入',
-  Edit: '编辑',
-  Bash: '终端执行',
-  Grep: '内容检索',
-  Glob: '文件匹配',
+  Read: '文件读取',
+  Write: '文件写入',
+  Edit: '文件编辑',
+  Bash: 'Shell 命令',
+  Grep: '内容搜索',
+  Glob: '文件模式匹配',
   Task: '任务',
   TodoWrite: '待办写入',
   TodoRead: '待办读取',
@@ -196,6 +197,7 @@ export const toolNameReflect: Record<ToolName, string> = {
   ApplyPatch: '应用补丁',
   AskUserQuestion: '询问用户问题',
   Skill: '技能',
+  WebSearch: '网络搜索',
 }
 
 /**
