@@ -1,6 +1,7 @@
 <script lang="ts" setup>
 import { formatLastActivity } from '@/utils/tools'
 import { useChat } from '../hooks/useChat'
+import { Session } from '../types'
 
 const emit = defineEmits(['add'])
 
@@ -19,6 +20,22 @@ const {
   handleSessionClick,
   newSession,
 } = useChat()
+
+const currentTime = ref(+new Date())
+
+const isSessionActive = (session: Session) => {
+  if (!session) return false
+  // Get the appropriate date based on session provider
+  let sessionDate = +new Date(session.lastActivity)
+  // Check if date is valid
+  if (isNaN(sessionDate)) {
+    return false
+  }
+  // Calculate difference in minutes
+  const diffInMinutes = Math.floor((currentTime.value - sessionDate) / (1000 * 60))
+  // Session is active if within last 10 minutes
+  return diffInMinutes < 10
+}
 
 const reloadPro = () => {
   searchValue.value = ''
@@ -48,7 +65,7 @@ const reloadPro = () => {
     <div class="filter_container">
       <div class="filter_label">排序方式</div>
       <t-radio-group v-model="sortBy" variant="default-filled">
-        <t-radio value="recent">最近活动</t-radio>
+        <t-radio value="recent">最近</t-radio>
         <t-radio value="name">名称</t-radio>
         <t-radio value="default">默认</t-radio>
       </t-radio-group>
@@ -116,6 +133,9 @@ const reloadPro = () => {
                     <t-icon name="delete" size="16px" />
                   </t-link>
                 </button>
+                <div v-if="isSessionActive(session)" class="absolute left-0 top-1/2 transform -translate-y-1/2 -translate-x-4">
+                  <div class="w-3 h-3 bg-green-500 rounded-full animate-pulse" />
+                </div>
               </div>
 
               <div v-if="!project.sessions || project.sessions.length === 0" class="no_sessions">
