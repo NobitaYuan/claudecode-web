@@ -1,3 +1,4 @@
+import { CCServerBaseUrl } from '@/api/api'
 import { Project } from '../types'
 import { RawSessionMessage } from './utils/message'
 
@@ -121,6 +122,9 @@ let reconnectTimeout: number | null = null
 const loadingProgress = ref<LoadingProgress | null>(null)
 const loadingProgressTimeout = ref<number | null>(null)
 const isLoading = ref(false)
+// 重连次数计数
+let reconnectCount = 0
+const MAX_RECONNECT_ATTEMPTS = 5 // 最大重连次数
 
 // ============================================================
 // 连接函数
@@ -135,7 +139,7 @@ const connect = async () => {
 
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
     // const wsUrl = `${protocol}//${window.location.host}/ws?token=${encodeURIComponent(token)}`
-    const wsUrl = `${protocol}//${window.location.host}/ws`
+    const wsUrl = `${protocol}//${window.location.host}${CCServerBaseUrl}/ws`
 
     console.log('wsUrl', wsUrl)
     const websocket = new WebSocket(wsUrl)
@@ -170,8 +174,12 @@ const connect = async () => {
       // ========================================================
       // 这里是自动重连逻辑
       // 3秒后尝试重连
+      if (reconnectCount >= MAX_RECONNECT_ATTEMPTS) {
+        return
+      }
       reconnectTimeout = window.setTimeout(() => {
         connect()
+        reconnectCount++
       }, 3000)
     }
 

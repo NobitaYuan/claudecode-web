@@ -69,7 +69,7 @@ npm install
 VITE_APP_TITLE = 'claudecode-on-web'
 
 # 服务端接口地址
-VITE_APP_BASE_API_URL = '/api'
+VITE_APP_BASE_CCSERVER_API_URL = '/api'
 ```
 
 ### 启动前端
@@ -258,11 +258,11 @@ const doubled = computed(() => count.value * 2)
 
 ## 🔐 环境变量说明
 
-| 变量名                  | 说明         | 默认值                |
-| ----------------------- | ------------ | --------------------- |
-| `VITE_APP_TITLE`        | 页面标题     | `'claudecode-on-web'` |
-| `VITE_APP_ENV`          | 当前环境     | `'development'`       |
-| `VITE_APP_BASE_API_URL` | API 基础路径 | `'/api'`              |
+| 变量名                           | 说明         | 默认值                |
+| -------------------------------- | ------------ | --------------------- |
+| `VITE_APP_TITLE`                 | 页面标题     | `'claudecode-on-web'` |
+| `VITE_APP_ENV`                   | 当前环境     | `'development'`       |
+| `VITE_APP_BASE_CCSERVER_API_URL` | API 基础路径 | `'/api'`              |
 
 ---
 

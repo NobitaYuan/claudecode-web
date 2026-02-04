@@ -5,6 +5,7 @@ import { WebglAddon } from '@xterm/addon-webgl'
 import { WebLinksAddon } from '@xterm/addon-web-links'
 import '@xterm/xterm/css/xterm.css'
 import { Project, Session } from '../types'
+import { CCServerBaseUrl } from '@/api/api'
 
 // ============ 类型定义 ============
 
@@ -103,7 +104,7 @@ const connectWebSocket = async (): Promise<void> => {
     // }
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
     // wsUrl = `${protocol}//${window.location.host}/shell?token=${encodeURIComponent(token)}`
-    wsUrl = `${protocol}//${window.location.host}/shell`
+    wsUrl = `${protocol}//${window.location.host}${CCServerBaseUrl}/shell`
 
     ws.value = new WebSocket(wsUrl)
 

@@ -1,30 +1,31 @@
-const BaseUrl = '/api'
+export const CCServerBaseUrl = import.meta.env.VITE_APP_BASE_CCSERVER_API_URL
 
 // API endpoints
 export const api = {
   // Auth endpoints (no token required)
   auth: {
-    status: () => fetch(BaseUrl + '/auth/status'),
+    status: () => fetch(CCServerBaseUrl + '/auth/status'),
     login: (username: any, password: any) =>
-      fetch(BaseUrl + '/auth/login', {
+      fetch(CCServerBaseUrl + '/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password }),
       }),
     register: (username: any, password: any) =>
-      fetch(BaseUrl + '/auth/register', {
+      fetch(CCServerBaseUrl + '/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password }),
       }),
-    user: () => authenticatedFetch(BaseUrl + '/auth/user'),
-    logout: () => authenticatedFetch(BaseUrl + '/auth/logout', { method: 'POST' }),
+    user: () => authenticatedFetch(CCServerBaseUrl + '/auth/user'),
+    logout: () => authenticatedFetch(CCServerBaseUrl + '/auth/logout', { method: 'POST' }),
   },
 
   // Protected endpoints
   // config endpoint removed - no longer needed (frontend uses window.location)
-  projects: () => authenticatedFetch(BaseUrl + '/projects'),
-  sessions: (projectName: string, limit = 5, offset = 0) => authenticatedFetch(`${BaseUrl}/projects/${projectName}/sessions?limit=${limit}&offset=${offset}`),
+  projects: () => authenticatedFetch(CCServerBaseUrl + '/projects'),
+  sessions: (projectName: string, limit = 5, offset = 0) =>
+    authenticatedFetch(`${CCServerBaseUrl}/projects/${projectName}/sessions?limit=${limit}&offset=${offset}`),
   sessionMessages: (projectName: string, sessionId: string, limit: number = null, offset = 0, provider = 'claude') => {
     const params = new URLSearchParams()
     if (limit !== null) {
@@ -36,56 +37,56 @@ export const api = {
     // Route to the correct endpoint based on provider
     let url
     if (provider === 'codex') {
-      url = `${BaseUrl}/codex/sessions/${sessionId}/messages${queryString ? `?${queryString}` : ''}`
+      url = `${CCServerBaseUrl}/codex/sessions/${sessionId}/messages${queryString ? `?${queryString}` : ''}`
     } else if (provider === 'cursor') {
-      url = `${BaseUrl}/cursor/sessions/${sessionId}/messages${queryString ? `?${queryString}` : ''}`
+      url = `${CCServerBaseUrl}/cursor/sessions/${sessionId}/messages${queryString ? `?${queryString}` : ''}`
     } else {
-      url = `${BaseUrl}/projects/${projectName}/sessions/${sessionId}/messages${queryString ? `?${queryString}` : ''}`
+      url = `${CCServerBaseUrl}/projects/${projectName}/sessions/${sessionId}/messages${queryString ? `?${queryString}` : ''}`
     }
     return authenticatedFetch(url)
   },
   renameProject: (projectName: any, displayName: any) =>
-    authenticatedFetch(`${BaseUrl}/projects/${projectName}/rename`, {
+    authenticatedFetch(`${CCServerBaseUrl}/projects/${projectName}/rename`, {
       method: 'PUT',
       body: JSON.stringify({ displayName }),
     }),
   deleteSession: (projectName: any, sessionId: any) =>
-    authenticatedFetch(`${BaseUrl}/projects/${projectName}/sessions/${sessionId}`, {
+    authenticatedFetch(`${CCServerBaseUrl}/projects/${projectName}/sessions/${sessionId}`, {
       method: 'DELETE',
     }),
   deleteCodexSession: (sessionId: any) =>
-    authenticatedFetch(`${BaseUrl}/codex/sessions/${sessionId}`, {
+    authenticatedFetch(`${CCServerBaseUrl}/codex/sessions/${sessionId}`, {
       method: 'DELETE',
     }),
   deleteProject: (projectName: any, force = false) =>
-    authenticatedFetch(`${BaseUrl}/projects/${projectName}${force ? '?force=true' : ''}`, {
+    authenticatedFetch(`${CCServerBaseUrl}/projects/${projectName}${force ? '?force=true' : ''}`, {
       method: 'DELETE',
     }),
   createProject: (path: any) =>
-    authenticatedFetch(BaseUrl + '/projects/create', {
+    authenticatedFetch(CCServerBaseUrl + '/projects/create', {
       method: 'POST',
       body: JSON.stringify({ path }),
     }),
   createFolder: (folderPath: string): Promise<Response> =>
-    authenticatedFetch(BaseUrl + '/create-folder', {
+    authenticatedFetch(CCServerBaseUrl + '/create-folder', {
       method: 'POST',
       body: JSON.stringify({ path: folderPath }),
     } as APIConfig),
   createWorkspace: (workspaceData: { workspaceType: string; path: string }): Promise<Response> =>
-    authenticatedFetch(BaseUrl + '/projects/create-workspace', {
+    authenticatedFetch(CCServerBaseUrl + '/projects/create-workspace', {
       method: 'POST',
       body: JSON.stringify(workspaceData),
     } as APIConfig),
   readFile: (projectName: any, filePath: string | number | boolean) =>
-    authenticatedFetch(`${BaseUrl}/projects/${projectName}/file?filePath=${encodeURIComponent(filePath)}`),
+    authenticatedFetch(`${CCServerBaseUrl}/projects/${projectName}/file?filePath=${encodeURIComponent(filePath)}`),
   saveFile: (projectName: any, filePath: any, content: any) =>
-    authenticatedFetch(`${BaseUrl}/projects/${projectName}/file`, {
+    authenticatedFetch(`${CCServerBaseUrl}/projects/${projectName}/file`, {
       method: 'PUT',
       body: JSON.stringify({ filePath, content }),
     }),
-  getFiles: (projectName: any) => authenticatedFetch(`${BaseUrl}/projects/${projectName}/files`),
+  getFiles: (projectName: any) => authenticatedFetch(`${CCServerBaseUrl}/projects/${projectName}/files`),
   transcribe: (formData: any) =>
-    authenticatedFetch(BaseUrl + '/transcribe', {
+    authenticatedFetch(CCServerBaseUrl + '/transcribe', {
       method: 'POST',
       body: formData,
       headers: {}, // Let browser set Content-Type for FormData
@@ -95,37 +96,37 @@ export const api = {
   taskmaster: {
     // Initialize TaskMaster in a project
     init: (projectName: any) =>
-      authenticatedFetch(`${BaseUrl}/taskmaster/init/${projectName}`, {
+      authenticatedFetch(`${CCServerBaseUrl}/taskmaster/init/${projectName}`, {
         method: 'POST',
       }),
 
     // Add a new task
     addTask: (projectName: any, { prompt, title, description, priority, dependencies }: any) =>
-      authenticatedFetch(`${BaseUrl}/taskmaster/add-task/${projectName}`, {
+      authenticatedFetch(`${CCServerBaseUrl}/taskmaster/add-task/${projectName}`, {
         method: 'POST',
         body: JSON.stringify({ prompt, title, description, priority, dependencies }),
       }),
 
     // Parse PRD to generate tasks
     parsePRD: (projectName: any, { fileName, numTasks, append }: any) =>
-      authenticatedFetch(`${BaseUrl}/taskmaster/parse-prd/${projectName}`, {
+      authenticatedFetch(`${CCServerBaseUrl}/taskmaster/parse-prd/${projectName}`, {
         method: 'POST',
         body: JSON.stringify({ fileName, numTasks, append }),
       }),
 
     // Get available PRD templates
-    getTemplates: () => authenticatedFetch(BaseUrl + '/taskmaster/prd-templates'),
+    getTemplates: () => authenticatedFetch(CCServerBaseUrl + '/taskmaster/prd-templates'),
 
     // Apply a PRD template
     applyTemplate: (projectName: any, { templateId, fileName, customizations }: any) =>
-      authenticatedFetch(`${BaseUrl}/taskmaster/apply-template/${projectName}`, {
+      authenticatedFetch(`${CCServerBaseUrl}/taskmaster/apply-template/${projectName}`, {
         method: 'POST',
         body: JSON.stringify({ templateId, fileName, customizations }),
       }),
 
     // Update a task
     updateTask: (projectName: any, taskId: any, updates: any) =>
-      authenticatedFetch(`${BaseUrl}/taskmaster/update-task/${projectName}/${taskId}`, {
+      authenticatedFetch(`${CCServerBaseUrl}/taskmaster/update-task/${projectName}/${taskId}`, {
         method: 'PUT',
         body: JSON.stringify(updates),
       }),
@@ -136,26 +137,26 @@ export const api = {
     const params = new URLSearchParams()
     if (dirPath) params.append('path', dirPath)
 
-    return authenticatedFetch(`${BaseUrl}/browse-filesystem?${params}`)
+    return authenticatedFetch(`${CCServerBaseUrl}/browse-filesystem?${params}`)
   },
 
   // User endpoints
   user: {
-    gitConfig: () => authenticatedFetch(BaseUrl + '/user/git-config'),
+    gitConfig: () => authenticatedFetch(CCServerBaseUrl + '/user/git-config'),
     updateGitConfig: (gitName: any, gitEmail: any) =>
-      authenticatedFetch(BaseUrl + '/user/git-config', {
+      authenticatedFetch(CCServerBaseUrl + '/user/git-config', {
         method: 'POST',
         body: JSON.stringify({ gitName, gitEmail }),
       }),
-    onboardingStatus: () => authenticatedFetch(BaseUrl + '/user/onboarding-status'),
+    onboardingStatus: () => authenticatedFetch(CCServerBaseUrl + '/user/onboarding-status'),
     completeOnboarding: () =>
-      authenticatedFetch(BaseUrl + '/user/complete-onboarding', {
+      authenticatedFetch(CCServerBaseUrl + '/user/complete-onboarding', {
         method: 'POST',
       }),
   },
 
   // Generic GET method for any endpoint
-  get: (endpoint: any) => authenticatedFetch(`${BaseUrl}${endpoint}`),
+  get: (endpoint: any) => authenticatedFetch(`${CCServerBaseUrl}${endpoint}`),
 }
 
 export interface APIConfig {

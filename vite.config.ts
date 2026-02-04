@@ -13,7 +13,7 @@ export default defineConfig((env: ConfigEnv) => {
   const envVar = loadEnv(mode, process.cwd())
 
   // 环境变量
-  const { VITE_APP_TITLE, VITE_APP_BASE_API_URL } = envVar
+  const { VITE_APP_TITLE, VITE_APP_BASE_CCSERVER_API_URL } = envVar
   const IP = {
     dev: `http://localhost:3001`,
     test: 'http://172.21.0.3:30001/',
@@ -62,20 +62,20 @@ export default defineConfig((env: ConfigEnv) => {
       host: true,
       proxy: {
         /* /api */
-        [VITE_APP_BASE_API_URL]: {
-          target: IP.test,
+        [VITE_APP_BASE_CCSERVER_API_URL]: {
+          target: IP.dev,
           configure: (proxy, options) => {
             proxy.on('proxyReq', (proxyReq, req) => {
               console.log(`[Proxy Url] ${req.method} ${req.url} -> ${options.target}${req.url}`)
             })
           },
         },
-        '/ws': {
-          target: IP.test,
+        [VITE_APP_BASE_CCSERVER_API_URL + '/ws']: {
+          target: IP.dev,
           ws: true,
         },
-        '/shell': {
-          target: IP.test,
+        [VITE_APP_BASE_CCSERVER_API_URL + '/shell']: {
+          target: IP.dev,
           ws: true,
         },
       },
