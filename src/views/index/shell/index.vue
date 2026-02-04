@@ -96,13 +96,14 @@ const connectWebSocket = async (): Promise<void> => {
   try {
     let wsUrl: string
 
-    const token = localStorage.getItem('auth-token')
-    if (!token) {
-      console.error('No authentication token found for Shell WebSocket connection')
-      return
-    }
+    // const token = localStorage.getItem('auth-token')
+    // if (!token) {
+    //   console.error('No authentication token found for Shell WebSocket connection')
+    //   return
+    // }
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
-    wsUrl = `${protocol}//${window.location.host}/shell?token=${encodeURIComponent(token)}`
+    // wsUrl = `${protocol}//${window.location.host}/shell?token=${encodeURIComponent(token)}`
+    wsUrl = `${protocol}//${window.location.host}/shell`
 
     ws.value = new WebSocket(wsUrl)
 

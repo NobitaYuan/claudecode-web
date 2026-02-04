@@ -7,6 +7,7 @@ const emit = defineEmits(['add'])
 const activeProjects = ref<string[]>([])
 const {
   getProjects,
+  delProject,
   delSession,
   projects,
   filteredProjects,
@@ -83,6 +84,11 @@ const reloadPro = () => {
                   </span>
                 </div>
               </div>
+              <button class="delPro w-6 h-6 bg-red-50 hover:bg-red-100 dark:bg-red-900/20 dark:hover:bg-red-900/40 rounded flex items-center justify-center">
+                <t-link @click.stop="delProject(project)" theme="danger" hover="color">
+                  <t-icon name="delete" size="16px" />
+                </t-link>
+              </button>
             </div>
           </template>
 
@@ -184,13 +190,16 @@ const reloadPro = () => {
         transition: background-color 0.2s;
         flex-direction: row-reverse;
         padding: 12px 12px;
-
+        position: relative;
         .t-collapse-panel__icon {
           margin-right: 0px;
           margin-left: 8px;
         }
         &:hover {
           background-color: var(--td-bg-color-container-hover);
+          .delPro {
+            display: flex !important;
+          }
         }
       }
       :deep(.t-collapse-panel__header--blank) {
@@ -263,6 +272,13 @@ const reloadPro = () => {
                 font-weight: normal;
               }
             }
+          }
+          .delPro {
+            display: none;
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
           }
         }
       }

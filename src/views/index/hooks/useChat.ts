@@ -59,6 +59,27 @@ const getProjects = async () => {
     projectLoading.value = false
   }
 }
+// 删除项目
+const delProject = async (project: Project) => {
+  const incetance = DialogPlugin.confirm({
+    header: '提示',
+    body: `确认永久删除「${project.displayName}」项目工作区？`,
+    onConfirm: async () => {
+      try {
+        projectLoading.value = true
+        await api.deleteProject(project.name, true)
+        incetance.destroy()
+        // 如果删除的项目中有当前的会话，则清理会话
+        if (project.sessions.find((s) => s.id === selectedSession.value?.id)) {
+          clearSessionData()
+        }
+        await getProjects()
+      } finally {
+        projectLoading.value = false
+      }
+    },
+  })
+}
 
 // ============================对话列表================================
 // 当前的对话
@@ -132,14 +153,14 @@ const clearSessionData = () => {
   convertedMessages.value = []
 }
 // 删除会话列表
-const delSession = async (name: string, id: string) => {
+const delSession = async (projectName: string, id: string) => {
   const incetance = DialogPlugin.confirm({
     header: '提示',
-    body: '确认永久删除该会话？',
+    body: `确认永久删除该会话？`,
     onConfirm: async () => {
       try {
         projectLoading.value = true
-        await api.deleteSession(name, id)
+        await api.deleteSession(projectName, id)
         incetance.destroy()
         // 如果删除的是当前选中的，则清理会话
         if (id === selectedSession.value?.id) {
@@ -156,6 +177,7 @@ const delSession = async (name: string, id: string) => {
 export const useChat = () => {
   return {
     projects,
+    delProject,
     filteredProjects,
     projectLoading,
     searchValue,

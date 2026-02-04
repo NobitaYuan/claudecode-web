@@ -127,18 +127,20 @@ const isLoading = ref(false)
 const connect = async () => {
   try {
     closeConnect()
-    const token = localStorage.getItem('auth-token')
-
-    if (!token) {
-      console.warn('No authentication token found for WebSocket connection')
-      return
-    }
+    // const token = localStorage.getItem('auth-token') || ''
+    // if (!token) {
+    //   console.error('No authentication token found for WebSocket connection')
+    //   return
+    // }
 
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
-    const wsUrl = `${protocol}//${window.location.host}/ws?token=${encodeURIComponent(token)}`
+    // const wsUrl = `${protocol}//${window.location.host}/ws?token=${encodeURIComponent(token)}`
+    const wsUrl = `${protocol}//${window.location.host}/ws`
 
+    console.log('wsUrl', wsUrl)
     const websocket = new WebSocket(wsUrl)
 
+    console.log('-----websocket------', websocket)
     // ========================================================
     // 连接成功事件处理
     websocket.onopen = () => {
