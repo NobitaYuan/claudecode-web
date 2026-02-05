@@ -10,6 +10,8 @@ import { Project, TabKeyType } from './types'
 import tabNavigation from './components/tabNavigation.vue'
 import { useLocalStorage } from '@vueuse/core'
 import { useWebSocketMessageHandler } from './hooks/useWSMessageHandler'
+import fileTree from './fileTree/index.vue'
+
 const showDialog = ref(false)
 
 const { getProjects, rawMessages, isNewSessioning, handleSessionClick, selectedProject, selectedSession } = useChat()
@@ -56,6 +58,7 @@ onMounted(async () => {
             <template v-if="isNewSessioning || rawMessages?.length">
               <chatView v-if="showTab === 'chat'" />
               <shellView v-else-if="showTab === 'shell'" :selectedProject="selectedProject" :selectedSession="selectedSession" />
+              <fileTree v-else-if="showTab === 'files'" :selectedProject="selectedProject" :selectedSession="selectedSession" />
             </template>
             <div class="welcome_container" v-else>
               <t-empty status="info" title="欢迎使用 Claude Code On Web" description="请从左侧选择一个会话开始"> </t-empty>

@@ -16,9 +16,9 @@ export default defineConfig((env: ConfigEnv) => {
   const { VITE_APP_TITLE, VITE_APP_BASE_CCSERVER_API_URL } = envVar
   const IP = {
     dev: `http://localhost:3001`,
-    test: 'http://172.21.0.3:30001/',
     lh: 'http://192.168.2.143:3001',
     lq: 'http://192.168.2.114:4040',
+    test: 'http://172.21.0.3:20001/',
   }
   return {
     plugins: [
@@ -61,9 +61,8 @@ export default defineConfig((env: ConfigEnv) => {
     server: {
       host: true,
       proxy: {
-        /* /api */
         [VITE_APP_BASE_CCSERVER_API_URL]: {
-          target: IP.dev,
+          target: IP.test,
           configure: (proxy, options) => {
             proxy.on('proxyReq', (proxyReq, req) => {
               console.log(`[Proxy Url] ${req.method} ${req.url} -> ${options.target}${req.url}`)
@@ -71,11 +70,11 @@ export default defineConfig((env: ConfigEnv) => {
           },
         },
         [VITE_APP_BASE_CCSERVER_API_URL + '/ws']: {
-          target: IP.dev,
+          target: IP.test,
           ws: true,
         },
         [VITE_APP_BASE_CCSERVER_API_URL + '/shell']: {
-          target: IP.dev,
+          target: IP.test,
           ws: true,
         },
       },
