@@ -5,7 +5,7 @@
         <!-- 目录图标 -->
         <t-icon
           v-if="item.type === 'directory'"
-          :name="isExpanded ? 'folder-open' : 'folder'"
+          :name="isExpanded ? 'folder-open-1' : 'folder-1'"
           :class="['node-icon', isExpanded ? 'icon-open' : 'icon-closed']"
         />
         <!-- 文件图标 -->

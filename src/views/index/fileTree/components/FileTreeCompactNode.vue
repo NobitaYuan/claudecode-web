@@ -5,7 +5,7 @@
         <div class="node-left">
           <t-icon
             v-if="item.type === 'directory'"
-            :name="isExpanded ? 'folder-open' : 'folder'"
+            :name="isExpanded ? 'folder-open-1' : 'folder-1'"
             :class="['node-icon', isExpanded ? 'icon-open' : 'icon-closed']"
           />
           <t-icon v-else :name="getFileIconName(item.name)" class="node-icon icon-file" />
@@ -118,15 +118,15 @@ const handleClick = () => {
   font-size: 16px;
 
   &.icon-open {
-    color: var(--td-brand-color);
+    color: var(--td-warning-color);
   }
 
   &.icon-closed {
-    color: var(--td-text-color-secondary);
+    // color: var(--td-text-color-secondary);
   }
 
   &.icon-file {
-    color: var(--td-text-color-placeholder);
+    color: var(--td-brand-color);
   }
 }
 

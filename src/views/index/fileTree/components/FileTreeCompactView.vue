@@ -17,7 +17,7 @@
 </template>
 
 <script setup lang="ts">
-import type { FileItem } from '../../types/file'
+import type { FileItem } from '../types/file'
 import FileTreeCompactNode from './FileTreeCompactNode.vue'
 
 defineProps<{
