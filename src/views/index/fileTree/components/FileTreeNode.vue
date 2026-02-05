@@ -98,14 +98,15 @@ const handleClick = () => {
   font-size: 16px;
 
   &.icon-open {
-    color: var(--td-brand-color);
+    color: var(--td-warning-color);
   }
 
   &.icon-closed {
-    color: var(--td-text-color-secondary);
+    // color: var(--td-text-color-secondary);
   }
 
   &.icon-file {
+    color: var(--td-brand-color);
     &.icon-code {
       color: var(--td-success-color);
     }

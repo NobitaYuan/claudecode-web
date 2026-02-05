@@ -270,7 +270,7 @@ watch(
   border: none;
   outline: none;
   resize: none;
-  background-color: var(--td-bg-color-container);
+  background-color: var(--td-gray-color-1);
   color: var(--td-text-color-primary);
   tab-size: 2;
 
