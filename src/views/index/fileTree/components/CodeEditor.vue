@@ -1,69 +1,11 @@
-<template>
-  <t-dialog
-    :visible="true"
-    :footer="false"
-    :close-on-overlay-click="false"
-    :show-overlay="true"
-    closeOnEscKeydown
-    size="large"
-    theme="default"
-    class="code-editor-dialog"
-    @close="handleClose"
-    width="80vw"
-    top="10vh"
-  >
-    <template #header>
-      <div class="code-editor-header">
-        <div class="header-info">
-          <h3 class="header-title">{{ file.name }}</h3>
-          <p class="header-path">{{ file.path }}</p>
-        </div>
-        <div class="header-actions">
-          <t-button variant="text" size="small" :title="'下载'" @click="handleDownload">
-            <template #icon>
-              <t-icon name="download" />
-            </template>
-          </t-button>
-          <t-button :variant="saveSuccess ? 'outline' : 'base'" :loading="saving" @click="handleSave">
-            <template #icon>
-              <t-icon v-if="saveSuccess" name="check" />
-              <t-icon v-else name="save" />
-            </template>
-            {{ saveSuccess ? '已保存' : saving ? '保存中...' : '保存' }}
-          </t-button>
-        </div>
-      </div>
-    </template>
-
-    <div class="code-editor-content">
-      <!-- 加载状态 -->
-      <div v-if="loading" class="loading-container">
-        <div class="loading-spinner"></div>
-        <div class="loading-text">正在加载 {{ file.name }}...</div>
-      </div>
-
-      <!-- 编辑器 -->
-      <div v-else class="editor-container">
-        <textarea ref="editorRef" v-model="content" class="editor-textarea" spellcheck="false"></textarea>
-      </div>
-    </div>
-
-    <template #footer>
-      <div class="code-editor-footer">
-        <div class="footer-stats">
-          <span>行数: {{ lineCount }}</span>
-          <span>字符数: {{ characterCount }}</span>
-        </div>
-        <div class="footer-shortcuts">快捷键: Ctrl+S 保存, Esc 关闭</div>
-      </div>
-    </template>
-  </t-dialog>
-</template>
-
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import type { SelectedFile } from '../types/file'
 import { fileApi } from '../api'
+import MessageResponse from '@/components/ai-elements/message/MessageResponse.vue'
+import { SplitterGroup, SplitterPanel, SplitterResizeHandle } from 'reka-ui'
+import monacoEditor from '@/components/monacoEditor/index.vue'
+import { useLocalStorage } from '@vueuse/core'
 
 const props = defineProps<{ file: SelectedFile }>()
 
@@ -73,11 +15,14 @@ const content = ref('')
 const loading = ref(true)
 const saving = ref(false)
 const saveSuccess = ref(false)
-const editorRef = ref<HTMLTextAreaElement | null>(null)
 
 // 统计信息
 const lineCount = computed(() => content.value.split('\n').length)
 const characterCount = computed(() => content.value.length)
+// 文件类型
+const fileExt = computed(() => {
+  return props.file.name.split('.').pop()?.toLowerCase()
+})
 
 // 加载文件内容
 const loadFileContent = async () => {
@@ -146,6 +91,8 @@ const handleKeydown = (e: KeyboardEvent) => {
   }
 }
 
+const showMdPreview = useLocalStorage('showMdPreview', false)
+
 onMounted(() => {
   loadFileContent()
   document.addEventListener('keydown', handleKeydown)
@@ -163,6 +110,85 @@ watch(
   },
 )
 </script>
+
+<template>
+  <t-dialog
+    :visible="true"
+    :footer="false"
+    :close-on-overlay-click="false"
+    :show-overlay="true"
+    closeOnEscKeydown
+    size="large"
+    theme="default"
+    class="code-editor-dialog"
+    @close="handleClose"
+    width="90vw"
+    top="10vh"
+  >
+    <template #header>
+      <div class="code-editor-header">
+        <div class="header-info">
+          <h3 class="header-title">{{ file.name }}</h3>
+          <p class="header-path">{{ file.path }}</p>
+        </div>
+        <div class="header-actions">
+          <t-button v-if="fileExt === 'md'" variant="text" @click="showMdPreview = !showMdPreview" :title="showMdPreview ? '关闭预览MD' : '预览MD'">
+            <t-icon :name="showMdPreview ? 'browse' : 'browse-off'" />
+          </t-button>
+          <t-button variant="text" size="small" :title="'下载'" @click="handleDownload">
+            <template #icon>
+              <t-icon name="download" />
+            </template>
+          </t-button>
+          <t-button :variant="saveSuccess ? 'outline' : 'base'" :loading="saving" @click="handleSave">
+            <template #icon>
+              <t-icon v-if="saveSuccess" name="check" />
+              <t-icon v-else name="save" />
+            </template>
+            {{ saveSuccess ? '已保存' : saving ? '保存中...' : '保存' }}
+          </t-button>
+        </div>
+      </div>
+    </template>
+
+    <div class="code-editor-content">
+      <!-- 加载状态 -->
+      <div v-if="loading" class="loading-container">
+        <div class="loading-spinner"></div>
+        <div class="loading-text">正在加载 {{ file.name }}...</div>
+      </div>
+
+      <!-- 编辑器 -->
+      <div v-else class="editor-container">
+        <SplitterGroup :direction="'horizontal'" auto-save-id="splitter-codeEditor">
+          <SplitterPanel :min-size="10">
+            <div class="h-full overflow-hidden">
+              <monacoEditor v-model="content"></monacoEditor>
+            </div>
+          </SplitterPanel>
+          <template v-if="fileExt === 'md' && showMdPreview">
+            <SplitterResizeHandle class="resizeLine"> </SplitterResizeHandle>
+            <SplitterPanel :min-size="10" class="right">
+              <div class="h-full overflow-auto">
+                <MessageResponse :content="content" />
+              </div>
+            </SplitterPanel>
+          </template>
+        </SplitterGroup>
+      </div>
+    </div>
+
+    <template #footer>
+      <div class="code-editor-footer">
+        <div class="footer-stats">
+          <span>行数: {{ lineCount }}</span>
+          <span>字符数: {{ characterCount }}</span>
+        </div>
+        <div class="footer-shortcuts">快捷键: Ctrl+S 保存, Esc 关闭</div>
+      </div>
+    </template>
+  </t-dialog>
+</template>
 
 <style scoped lang="scss">
 .code-editor-dialog {
@@ -258,6 +284,12 @@ watch(
 .editor-container {
   flex: 1;
   overflow: hidden;
+  display: flex;
+  .resizeLine {
+    width: 1px;
+    background-color: var(--td-font-gray-4);
+    margin: 0 12px;
+  }
 }
 
 .editor-textarea {
