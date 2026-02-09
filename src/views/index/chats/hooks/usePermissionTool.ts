@@ -85,6 +85,54 @@ export function usePermissionTool(emit: (event: 'sendAnswer', data: any) => void
 
 /* 
 数据示例：
+{
+    "type": "claude-permission-request",
+    "requestId": "1b7262f8-5d13-4a8a-9ac9-6b516b2ee1fc",
+    "toolName": "AskUserQuestion",
+    "input": {
+        "questions": [
+            {
+                "question": "这个 todolist 需要持久化存储数据吗？（比如存储到 localStorage）",
+                "header": "数据存储",
+                "options": [
+                    {
+                        "label": "需要 localStorage 持久化",
+                        "description": "刷新页面后数据仍然保留"
+                    },
+                    {
+                        "label": "仅内存存储",
+                        "description": "刷新页面后数据清空，简单实现"
+                    }
+                ],
+                "multiSelect": false
+            },
+            {
+                "question": "你希望 todolist 包含哪些功能？",
+                "header": "功能范围",
+                "options": [
+                    {
+                        "label": "添加任务",
+                        "description": "输入框添加新的待办事项"
+                    },
+                    {
+                        "label": "删除任务",
+                        "description": "可以删除单个任务"
+                    },
+                    {
+                        "label": "标记完成",
+                        "description": "点击切换任务的完成状态"
+                    },
+                    {
+                        "label": "清空已完成",
+                        "description": "一键清除所有已完成的任务"
+                    }
+                ],
+                "multiSelect": true
+            }
+        ]
+    },
+    "sessionId": "b77e62a4-1636-4f8b-907e-cfca82750eb0"
+}
 ————————————————————————————————
 {
     "type": "claude-permission-request",

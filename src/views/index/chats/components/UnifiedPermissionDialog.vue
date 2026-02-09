@@ -58,21 +58,21 @@ const getRequestConfig = (toolName: string) => {
     <div
       v-for="(request, index) in simpleRequests"
       :key="request.requestId"
-      class="permissionDialog bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4"
-      :style="{ marginTop: index === 0 ? '0' : '1rem' }"
+      class="permissionDialog bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-3"
+      :style="{ marginTop: index === 0 ? '0' : '0.75rem' }"
     >
       <!-- 标题 -->
-      <div class="text-[26px] mb-[12px]">
+      <div class="text-base mb-2 font-semibold text-amber-900 dark:text-amber-100">
         {{ getRequestConfig(request.toolName)?.title }}
       </div>
 
       <!-- 文件路径（如果需要）-->
-      <p v-if="getRequestConfig(request.toolName) && request.input?.file_path" class="mb-2 text-sm text-gray-600 dark:text-gray-400">
+      <p v-if="getRequestConfig(request.toolName) && request.input?.file_path" class="mb-2 text-xs text-gray-600 dark:text-gray-400">
         {{ request.input.file_path }}
       </p>
 
       <!-- 内容区域 -->
-      <div class="md flex-1 overflow-auto">
+      <div class="md flex-1 overflow-auto text-sm text-amber-900 dark:text-amber-100">
         {{ getRequestConfig(request.toolName)?.getContent(request.input) }}
       </div>
 
@@ -105,6 +105,9 @@ const getRequestConfig = (toolName: string) => {
   left: 0;
   top: 0;
   transform: translateY(-100%);
+  overflow: auto;
+  max-height: 60vh;
+  padding: 12px 36px 12px 12px;
 }
 
 .permissionDialog {
@@ -113,6 +116,11 @@ const getRequestConfig = (toolName: string) => {
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  box-shadow:
+    0 10px 15px -3px rgba(0, 0, 0, 0.1),
+    0 4px 6px -2px rgba(0, 0, 0, 0.05),
+    0 0 20px rgba(0, 0, 0, 0.1);
+  padding: 24px;
 
   .md {
     flex: 1;
