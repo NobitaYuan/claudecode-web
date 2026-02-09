@@ -1,7 +1,6 @@
 <script lang="ts" setup>
 import { computed } from 'vue'
 import { usePermissionTool } from '../hooks/usePermissionTool'
-import MessageResponse from '@/components/ai-elements/message/MessageResponse.vue'
 
 const emit = defineEmits(['sendAnswer'])
 const { pendingRequests, sendAnswer } = usePermissionTool(emit)
@@ -74,7 +73,7 @@ const getRequestConfig = (toolName: string) => {
 
       <!-- 内容区域 -->
       <div class="md flex-1 overflow-auto">
-        <MessageResponse :conetent="getRequestConfig(request.toolName)?.getContent(request.input)" />
+        {{ getRequestConfig(request.toolName)?.getContent(request.input) }}
       </div>
 
       <!-- 操作按钮 -->
