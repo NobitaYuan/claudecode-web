@@ -50,7 +50,7 @@ withDefaults(defineProps<IProps>(), {
         <div :class="['relative text-sm', message.toolResult.isError ? 'text-red-900 dark:text-red-100' : 'text-green-900 dark:text-green-100']">
           <!-- TODO: 这里的工具结果渲染逻辑比较复杂，需要处理多种特殊情况 -->
           <!-- 例如：TodoList 结果、Grep/Glob 结果、交互式提示结果等 -->
-          <MessageResponse class="prose prose-sm max-w-none prose-green dark:prose-invert" :content="message.toolResult.content"> </MessageResponse>
+          {{ message.toolResult.content }}
         </div>
       </details>
     </div>

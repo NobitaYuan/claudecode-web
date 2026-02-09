@@ -366,15 +366,15 @@ const openImg = (img: string) => {
       <!-- 这里是消息内容容器 -->
       <div class="w-full">
         <!-- ========================================================
-             子分支 2.1: 这里是交互式提示渲染分支
+             NOTE:废弃：子分支 2.1: 这里是交互式提示渲染分支
              ======================================================== -->
-        <template v-if="message.isInteractivePrompt">
+        <!-- <template v-if="message.isInteractivePrompt">
           <questionSelecter :message="message" />
-        </template>
+        </template> -->
         <!-- ========================================================
              子分支 2.2: 这里是工具调用渲染分支 (排除 Read/TodoWrite/TodoRead)
              ======================================================== -->
-        <div v-else-if="message.isToolUse && !['Read', 'TodoWrite', 'TodoRead'].includes(message.toolName)">
+        <div v-if="message.isToolUse && !['Read', 'TodoWrite', 'TodoRead'].includes(message.toolName)">
           <!-- ========================================================
                这里是搜索工具简化视图分支 (Grep/Glob)
                ======================================================== -->
@@ -400,7 +400,7 @@ const openImg = (img: string) => {
                 </span>
               </div>
               <!-- 搜索结果链接 -->
-              <a
+              <!-- <a
                 v-if="message.toolResult"
                 :href="`#tool-result-${message.toolId}`"
                 class="flex-shrink-0 text-xs text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium transition-colors flex items-center gap-1"
@@ -409,7 +409,7 @@ const openImg = (img: string) => {
                 <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                 </svg>
-              </a>
+              </a> -->
             </div>
           </div>
 

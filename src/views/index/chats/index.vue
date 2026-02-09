@@ -24,12 +24,14 @@ import ThinkingMessage from './components/thinkingStatus.vue'
 import { useCreateDiff } from './utils/createDiff'
 import { useWebSocket } from '../hooks/useWebSocket'
 import { Message } from '../hooks/utils/message'
-import permissionModeSelector from './components/permissionModeSelector.vue'
+import claudeModeSelector from './components/claudeModeSelector.vue'
 import { useLocalStorage } from '@vueuse/core'
 import { useClaudePermission } from '../hooks/useClaudePermission'
 import permissionQuestion from './components/permissionQuestion.vue'
 import permissionDecision from './components/permissionDecision.vue'
 import permissionBash from './components/permissionBash.vue'
+import permissionWrite from './components/permissionWrite.vue'
+import permissionEdit from './components/permissionEdit.vue'
 
 const thinkingModes = [
   {
@@ -174,13 +176,13 @@ function handleSubmit(message: PromptInputMessage) {
 
 // 打断发送
 function abortSession() {
+  isLoading.value = true
   sendMessage({
     type: 'abort-session',
     sessionId: selectedSession.value.id,
     provider: 'claude',
   })
   cancelAllPermission()
-  isLoading.value = true
 }
 
 function sendAnswer(msg: any) {
@@ -228,6 +230,8 @@ defineExpose({
       <permissionQuestion @sendAnswer="sendAnswer" />
       <permissionDecision @sendAnswer="sendAnswer" />
       <permissionBash @sendAnswer="sendAnswer" />
+      <permissionWrite @sendAnswer="sendAnswer" />
+      <permissionEdit @sendAnswer="sendAnswer" />
       <div class="status flex justify-between px-5" v-if="isLoading">
         <ThinkingMessage />
         <t-button variant="outline" theme="danger" @click="abortSession">停止对话</t-button>
@@ -247,7 +251,7 @@ defineExpose({
 
           <PromptInputFooter>
             <PromptInputTools>
-              <permissionModeSelector v-model:mode="permissionMode" />
+              <claudeModeSelector v-model:mode="permissionMode" />
               <PromptInputActionMenu>
                 <PromptInputActionMenuTrigger />
                 <PromptInputActionMenuContent>

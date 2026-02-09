@@ -62,7 +62,7 @@ export default defineConfig((env: ConfigEnv) => {
       host: true,
       proxy: {
         [VITE_APP_BASE_CCSERVER_API_URL]: {
-          target: IP.test,
+          target: IP.dev,
           configure: (proxy, options) => {
             proxy.on('proxyReq', (proxyReq, req) => {
               console.log(`[Proxy Url] ${req.method} ${req.url} -> ${options.target}${req.url}`)
@@ -70,11 +70,11 @@ export default defineConfig((env: ConfigEnv) => {
           },
         },
         [VITE_APP_BASE_CCSERVER_API_URL + '/ws']: {
-          target: IP.test,
+          target: IP.dev,
           ws: true,
         },
         [VITE_APP_BASE_CCSERVER_API_URL + '/shell']: {
-          target: IP.test,
+          target: IP.dev,
           ws: true,
         },
       },

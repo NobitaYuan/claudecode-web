@@ -3,6 +3,41 @@ import { ref, computed } from 'vue'
 import { useClaudePermission } from '../../hooks/useClaudePermission'
 import { claudePermissionRequest } from '../../hooks/useWebSocket'
 
+/* 
+{
+    "type": "claude-permission-request",
+    "requestId": "aab36619-fb81-4df8-b5c1-8cda74c0085a",
+    "toolName": "AskUserQuestion",
+    "input": {
+        "questions": [
+            {
+                "question": "是否需要以下高级功能？",
+                "header": "高级功能",
+                "options": [
+                    {
+                        "label": "搜索功能",
+                        "description": "搜索待办事项（按标题、标签等）"
+                    },
+                    {
+                        "label": "排序功能",
+                        "description": "按创建时间、优先级、截止日期排序"
+                    },
+                    {
+                        "label": "子任务",
+                        "description": "子任务支持，一个待办可包含多个子任务"
+                    },
+                    {
+                        "label": "暂不需要",
+                        "description": "先做简单版本，后续迭代"
+                    }
+                ],
+                "multiSelect": true
+            }
+        ]
+    },
+    "sessionId": "436921d3-c214-456c-86b0-900108d371e2"
+}
+*/
 const emit = defineEmits(['sendAnswer'])
 
 const { claudePermissionMap, cancelPermission } = useClaudePermission()
@@ -26,7 +61,7 @@ const hasQuestion = computed(() => {
 })
 
 // 交互式的提问
-const question = computed(() => {
+const questions = computed(() => {
   if (!hasQuestion.value) return []
   let q
   claudePermissionMap.value.forEach((item) => {
@@ -53,7 +88,7 @@ const sendAnswer = (allow: boolean = true) => {
   emit('sendAnswer', {
     type: 'claude-permission-response',
     requestId: curRequest.value.requestId,
-    allow,
+    allow: allow ? 'allow' : 'deny',
     updatedInput: collectUserAnswers(), // 传递用户选择的答案
     // message: '',// 拒绝时的原因
     // rememberEntry: ''  // 可选，记住这次选择的权限条目
@@ -70,7 +105,7 @@ const activeTabIndex = ref(0)
 
 // 当前显示的问题
 const currentQuestion = computed(() => {
-  return question.value[activeTabIndex.value] || {}
+  return questions.value[activeTabIndex.value] || {}
 })
 
 // 选中选项的状态（存储每个问题选中的选项索引）
@@ -114,7 +149,7 @@ const isOptionSelected = (optionIndex: number | string) => {
 const collectUserAnswers = () => {
   const answers: Record<string, string[]> = {}
 
-  question.value.forEach((q, questionIndex) => {
+  questions.value.forEach((q, questionIndex) => {
     const selectedIndices = selectedOptions.value[questionIndex]
     if (selectedIndices && selectedIndices.length > 0) {
       // 使用问题的 header 作为 key，如果没有 header 则使用索引
@@ -153,11 +188,11 @@ watch(hasQuestion, (val) => {
         <h4 class="font-semibold text-amber-900 dark:text-amber-100 text-base mb-3">交互提示</h4>
 
         <!-- Tab 切换栏 (当有多个问题时显示) -->
-        <div v-if="question.length > 1" class="mb-4">
+        <div v-if="questions.length > 1" class="mb-4">
           <div class="flex flex-wrap gap-2 border-b border-amber-300 dark:border-amber-700 pb-2">
             <!-- @vue-ignore -->
             <button
-              v-for="(question, index) in question"
+              v-for="(question, index) in questions"
               :key="index"
               @click="activeTabIndex = index"
               :class="[

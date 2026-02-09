@@ -50,7 +50,7 @@ const sendAnswer = (allow: boolean = true) => {
   emit('sendAnswer', {
     type: 'claude-permission-response',
     requestId: curRequest.value.requestId,
-    behavior: allow ? 'allow' : 'deny',
+    allow: allow ? 'allow' : 'deny',
   })
   cancelPermission(curRequest.value)
 }
