@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { DiffLine, Message, ToolUseMessage } from '../../hooks/utils/message'
+import { DiffLine, Message } from '../../hooks/utils/message'
 
 interface IProps {
   message: Message

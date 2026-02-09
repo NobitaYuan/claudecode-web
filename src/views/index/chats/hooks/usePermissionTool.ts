@@ -1,12 +1,101 @@
-<script lang="ts" setup>
+import { computed } from 'vue'
 import { useClaudePermission } from '../../hooks/useClaudePermission'
 import { claudePermissionRequest } from '../../hooks/useWebSocket'
-import { MessageResponse } from '@/components/ai-elements/message'
-const emit = defineEmits(['sendAnswer'])
 
-const { claudePermissionMap, cancelPermission } = useClaudePermission()
+/**
+ * 权限响应选项
+ */
+export interface PermissionResponseOptions {
+  message?: string
+  updatedInput?: any
+  rememberEntry?: string
+}
 
-/*
+/**
+ * 权限工具 Composable
+ *
+ * 封装所有权限组件的通用逻辑，包括：
+ * - 获取所有未取消的权限请求
+ * - 发送权限响应
+ *
+ * @param emit - Vue emit 函数，用于发送 sendAnswer 事件
+ * @returns 权限工具的状态和操作方法
+ *
+ * @example
+ * ```vue
+ * <script setup>
+ * import { usePermissionTool } from '../../hooks/usePermissionTool'
+ * const emit = defineEmits(['sendAnswer'])
+ * const { pendingRequests, sendAnswer } = usePermissionTool(emit)
+ *
+ * // 处理 Bash 请求
+ * const bashRequests = computed(() =>
+ *   pendingRequests.value.filter(r => r.toolName === 'Bash')
+ * )
+ * </script>
+ * ```
+ */
+export function usePermissionTool(emit: (event: 'sendAnswer', data: any) => void) {
+  const { claudePermissionMap, cancelPermission } = useClaudePermission()
+
+  // 获取所有未取消的权限请求，按时间顺序排序（旧的在前）
+  const pendingRequests = computed(() => {
+    const requests: claudePermissionRequest[] = []
+    claudePermissionMap.value.forEach((item) => {
+      if (!item.isCancel) {
+        requests.push(item)
+      }
+    })
+    return requests
+  })
+
+  // 发送响应
+  const sendAnswer = (requestId: string, allow: boolean, options: PermissionResponseOptions = {}) => {
+    const request = claudePermissionMap.value.get(requestId)
+    if (!request) return
+
+    const response: any = {
+      type: 'claude-permission-response',
+      requestId: requestId,
+      allow: allow ? 'allow' : 'deny',
+    }
+
+    // 添加可选字段
+    if (options.message) {
+      response.message = options.message
+    }
+    if (options.updatedInput) {
+      response.updatedInput = options.updatedInput
+    }
+    if (options.rememberEntry) {
+      response.rememberEntry = options.rememberEntry
+    }
+
+    emit('sendAnswer', response)
+    cancelPermission(request)
+  }
+
+  return {
+    pendingRequests,
+    sendAnswer,
+    cancelPermission,
+  }
+}
+
+/* 
+数据示例：
+————————————————————————————————
+{
+    "type": "claude-permission-request",
+    "requestId": "15754b73-79f3-4985-9a28-5a02cadac448",
+    "toolName": "Bash",
+    "input": {
+        "command": "cat /proc/version 2>/dev/null || systeminfo | findstr /C:\"OS\"",
+        "description": "Check OS version"
+    },
+    "sessionId": "b8b2b65d-a034-4c20-b5de-6cda3e3d8ed7"
+}
+————————————————————————————————
 {
     "type": "claude-permission-request",
     "requestId": "75c1d73a-b5c2-4fdd-ba10-5c661e0ee2ad",
@@ -16,86 +105,28 @@ const { claudePermissionMap, cancelPermission } = useClaudePermission()
     },
     "sessionId": "7c7ba73a-2086-48ce-9624-b796f4a66a68"
 }
+————————————————————————————————
+{
+    "type": "claude-permission-request",
+    "requestId": "7cb9a8f9-e18e-49b5-9603-e42bc47e0b4a",
+    "toolName": "Edit",
+    "input": {
+        "file_path": "d:\\coding\\claudecodeWebServer\\database\\db.js",
+        "old_string": "const runMigrations = () => {\n  try {\n    const tableInfo = db.prepare(\"PRAGMA table_info(users)\").all();\n    const columnNames = tableInfo.map(col => col.name);\n\n    if (!columnNames.includes('git_name')) {\n      console.log('Running migration: Adding git_name column');\n      db.exec('ALTER TABLE users ADD COLUMN git_name TEXT');\n    }\n\n    if (!columnNames.includes('git_email')) {\n      console.log('Running migration: Adding git_email column');\n      db.exec('ALTER TABLE users ADD COLUMN git_email TEXT');\n    }\n\n    if (!columnNames.includes('has_completed_onboarding')) {\n      console.log('Running migration: Adding has_completed_onboarding column');\n      db.exec('ALTER TABLE users ADD COLUMN has_completed_onboarding BOOLEAN DEFAULT 0');\n    }\n\n    console.log('Database migrations completed successfully');\n  } catch (error) {\n    console.error('Error running migrations:', error.message);\n    throw error;\n  }\n};",
+        "new_string": "const runMigrations = () => {\n  try {\n    const tableInfo = db.prepare(\"PRAGMA table_info(users)\").all();\n    const columnNames = tableInfo.map(col => col.name);\n\n    if (!columnNames.includes('git_name')) {\n      console.log('Running migration: Adding git_name column');\n      db.exec('ALTER TABLE users ADD COLUMN git_name TEXT');\n    }\n\n    if (!columnNames.includes('git_email')) {\n      console.log('Running migration: Adding git_email column');\n      db.exec('ALTER TABLE users ADD COLUMN git_email TEXT');\n    }\n\n    if (!columnNames.includes('has_completed_onboarding')) {\n      console.log('Running migration: Adding has_completed_onboarding column');\n      db.exec('ALTER TABLE users ADD COLUMN has_completed_onboarding BOOLEAN DEFAULT 0');\n    }\n\n    // TodoList migration - check if todo tables exist\n    const todoTables = db.prepare(\n      \"SELECT name FROM sqlite_master WHERE type='table' AND name IN ('todos', 'todo_categories', 'todo_subtasks')\"\n    ).all();\n\n    if (todoTables.length < 3) {\n      console.log('Running migration: Creating todo tables');\n\n      // Create todo_categories table\n      db.exec(`\n        CREATE TABLE IF NOT EXISTS todo_categories (\n          id INTEGER PRIMARY KEY AUTOINCREMENT,\n          name TEXT UNIQUE NOT NULL,\n          color TEXT DEFAULT '#3B82F6',\n          icon TEXT DEFAULT '📝',\n          display_order INTEGER DEFAULT 0,\n          created_at DATETIME DEFAULT CURRENT_TIMESTAMP\n        );\n        CREATE INDEX IF NOT EXISTS idx_todo_categories_name ON todo_categories(name);\n      `);\n\n      // Create todos table\n      db.exec(`\n        CREATE TABLE IF NOT EXISTS todos (\n          id INTEGER PRIMARY KEY AUTOINCREMENT,\n          user_id INTEGER NOT NULL,\n          title TEXT NOT NULL,\n          description TEXT,\n          category_id INTEGER,\n          priority TEXT DEFAULT 'medium',\n          status TEXT DEFAULT 'pending',\n          due_date DATETIME,\n          completed_at DATETIME,\n          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,\n          updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,\n          FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,\n          FOREIGN KEY (category_id) REFERENCES todo_categories(id) ON DELETE SET NULL\n        );\n        CREATE INDEX IF NOT EXISTS idx_todos_user_id ON todos(user_id);\n        CREATE INDEX IF NOT EXISTS idx_todos_status ON todos(status);\n        CREATE INDEX IF NOT EXISTS idx_todos_priority ON todos(priority);\n        CREATE INDEX IF NOT EXISTS idx_todos_due_date ON todos(due_date);\n        CREATE INDEX IF NOT EXISTS idx_todos_category_id ON todos(category_id);\n        CREATE INDEX IF NOT EXISTS idx_todos_user_status ON todos(user_id, status);\n      `);\n\n      // Create todo_subtasks table\n      db.exec(`\n        CREATE TABLE IF NOT EXISTS todo_subtasks (\n          id INTEGER PRIMARY KEY AUTOINCREMENT,\n          todo_id INTEGER NOT NULL,\n          title TEXT NOT NULL,\n          is_completed BOOLEAN DEFAULT 0,\n          display_order INTEGER DEFAULT 0,\n          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,\n          completed_at DATETIME,\n          FOREIGN KEY (todo_id) REFERENCES todos(id) ON DELETE CASCADE\n        );\n        CREATE INDEX IF NOT EXISTS idx_subtasks_todo_id ON todo_subtasks(todo_id);\n        CREATE INDEX IF NOT EXISTS idx_subtasks_order ON todo_subtasks(todo_id, display_order);\n      `);\n\n      // Seed categories\n      const categoryCount = db.prepare('SELECT COUNT(*) as count FROM todo_categories').get();\n      if (categoryCount.count === 0) {\n        db.prepare('INSERT INTO todo_categories (name, color, icon, display_order) VALUES (?, ?, ?, ?)').run('work', '#3B82F6', '💼', 0);\n        db.prepare('INSERT INTO todo_categories (name, color, icon, display_order) VALUES (?, ?, ?, ?)').run('life', '#10B981', '🏠', 1);\n        db.prepare('INSERT INTO todo_categories (name, color, icon, display_order) VALUES (?, ?, ?, ?)').run('study', '#F59E0B', '📚', 2);\n        console.log('Seeded initial todo categories');\n      }\n    }\n\n    console.log('Database migrations completed successfully');\n  } catch (error) {\n    console.error('Error running migrations:', error.message);\n    throw error;\n  }\n};",
+        "replace_all": false
+    },
+    "sessionId": "436921d3-c214-456c-86b0-900108d371e2"
+}
+————————————————————————————————
+{
+    "type": "claude-permission-request",
+    "requestId": "2ad190e2-f029-4728-92f3-9e138e1f4b7c",
+    "toolName": "Write",
+    "input": {
+        "file_path": "d:\\coding\\claudecodeWebServer\\database\\migrations\\todolist.sql",
+        "content": "-- TodoList Migration SQL\n-- Creates tables for the todolist feature\n\n-- Categories table (fixed: work, life, study)\nCREATE TABLE IF NOT EXISTS todo_categories (\n    id INTEGER PRIMARY KEY AUTOINCREMENT,\n    name TEXT UNIQUE NOT NULL,\n    color TEXT DEFAULT '#3B82F6',\n    icon TEXT DEFAULT '📝',\n    display_order INTEGER DEFAULT 0,\n    created_at DATETIME DEFAULT CURRENT_TIMESTAMP\n);\n\n-- Todos table\nCREATE TABLE IF NOT EXISTS todos (\n    id INTEGER PRIMARY KEY AUTOINCREMENT,\n    user_id INTEGER NOT NULL,\n    title TEXT NOT NULL,\n    description TEXT,\n    category_id INTEGER,\n    priority TEXT DEFAULT 'medium',\n    status TEXT DEFAULT 'pending',\n    due_date DATETIME,\n    completed_at DATETIME,\n    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,\n    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,\n    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,\n    FOREIGN KEY (category_id) REFERENCES todo_categories(id) ON DELETE SET NULL\n);\n\n-- Subtasks table\nCREATE TABLE IF NOT EXISTS todo_subtasks (\n    id INTEGER PRIMARY KEY AUTOINCREMENT,\n    todo_id INTEGER NOT NULL,\n    title TEXT NOT NULL,\n    is_completed BOOLEAN DEFAULT 0,\n    display_order INTEGER DEFAULT 0,\n    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,\n    completed_at DATETIME,\n    FOREIGN KEY (todo_id) REFERENCES todos(id) ON DELETE CASCADE\n);\n\n-- Performance indexes for categories\nCREATE INDEX IF NOT EXISTS idx_todo_categories_name ON todo_categories(name);\n\n-- Performance indexes for todos\nCREATE INDEX IF NOT EXISTS idx_todos_user_id ON todos(user_id);\nCREATE INDEX IF NOT EXISTS idx_todos_status ON todos(status);\nCREATE INDEX IF NOT EXISTS idx_todos_priority ON todos(priority);\nCREATE INDEX IF NOT EXISTS idx_todos_due_date ON todos(due_date);\nCREATE INDEX IF NOT EXISTS idx_todos_category_id ON todos(category_id);\nCREATE INDEX IF NOT EXISTS idx_todos_user_status ON todos(user_id, status);\n\n-- Performance indexes for subtasks\nCREATE INDEX IF NOT EXISTS idx_subtasks_todo_id ON todo_subtasks(todo_id);\nCREATE INDEX IF NOT EXISTS idx_subtasks_order ON todo_subtasks(todo_id, display_order);\n\n-- Seed initial categories\nINSERT OR IGNORE INTO todo_categories (name, color, icon, display_order) VALUES\n    ('work', '#3B82F6', '💼', 0),\n    ('life', '#10B981', '🏠', 1),\n    ('study', '#F59E0B', '📚', 2);\n"
+    },
+    "sessionId": "436921d3-c214-456c-86b0-900108d371e2"
+}
 */
-// 是否有提问
-const hasQuestion = computed(() => {
-  let has = false
-  if (!claudePermissionMap.value.size) return false
-  claudePermissionMap.value.forEach((item) => {
-    // 没被取消
-    if (item.isCancel) {
-      has = false
-      return
-    }
-    if (item.toolName === 'ExitPlanMode' && item.input.plan) {
-      has = true
-    }
-  })
-  return has
-})
-
-// 当前的请求
-const curRequest = computed(() => {
-  if (!hasQuestion.value) return null
-  let q: claudePermissionRequest
-  claudePermissionMap.value.forEach((item) => {
-    if (item.toolName === 'ExitPlanMode') {
-      q = item
-    }
-  })
-  return q
-})
-
-const sendAnswer = (allow: boolean = true) => {
-  emit('sendAnswer', {
-    type: 'claude-permission-response',
-    requestId: curRequest.value.requestId,
-    allow: allow ? 'allow' : 'deny',
-  })
-  cancelPermission(curRequest.value)
-}
-</script>
-
-<template>
-  <div class="permissionDecision bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4" v-if="curRequest">
-    <div class="text-[26px] mb-[12px]">📄计划批准：</div>
-    <div class="md">
-      <MessageResponse :content="curRequest?.input?.plan || '?'"> </MessageResponse>
-    </div>
-    <div class="mt-3 flex flex-wrap gap-2 justify-end">
-      <button
-        type="button"
-        @click="sendAnswer(true)"
-        class="inline-flex items-center gap-2 rounded-md bg-amber-600 text-white text-xs font-medium px-3 py-1.5 hover:bg-amber-700 transition-colors"
-      >
-        同意
-      </button>
-
-      <button
-        type="button"
-        @click="sendAnswer(false)"
-        class="inline-flex items-center gap-2 rounded-md text-xs font-medium px-3 py-1.5 border border-red-300 text-red-700 hover:bg-red-50 dark:border-red-800 dark:text-red-200 dark:hover:bg-red-900/30 transition-colors"
-      >
-        拒绝
-      </button>
-    </div>
-  </div>
-</template>
-
-<style lang="scss" scoped>
-.permissionDecision {
-  position: absolute;
-  width: 100%;
-  max-height: 50vh;
-  overflow: hidden;
-  left: 0;
-  top: 0;
-  transform: translateY(-100%);
-  display: flex;
-  flex-direction: column;
-  .md {
-    flex: 1;
-    overflow: auto;
-  }
-}
-</style>

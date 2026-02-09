@@ -1,99 +1,34 @@
 <script lang="ts" setup>
-import { ref, computed } from 'vue'
-import { useClaudePermission } from '../../hooks/useClaudePermission'
-import { claudePermissionRequest } from '../../hooks/useWebSocket'
+import { ref, computed, watch } from 'vue'
+import { usePermissionTool } from '../hooks/usePermissionTool'
 
-/* 
-{
-    "type": "claude-permission-request",
-    "requestId": "aab36619-fb81-4df8-b5c1-8cda74c0085a",
-    "toolName": "AskUserQuestion",
-    "input": {
-        "questions": [
-            {
-                "question": "是否需要以下高级功能？",
-                "header": "高级功能",
-                "options": [
-                    {
-                        "label": "搜索功能",
-                        "description": "搜索待办事项（按标题、标签等）"
-                    },
-                    {
-                        "label": "排序功能",
-                        "description": "按创建时间、优先级、截止日期排序"
-                    },
-                    {
-                        "label": "子任务",
-                        "description": "子任务支持，一个待办可包含多个子任务"
-                    },
-                    {
-                        "label": "暂不需要",
-                        "description": "先做简单版本，后续迭代"
-                    }
-                ],
-                "multiSelect": true
-            }
-        ]
-    },
-    "sessionId": "436921d3-c214-456c-86b0-900108d371e2"
-}
-*/
 const emit = defineEmits(['sendAnswer'])
 
-const { claudePermissionMap, cancelPermission } = useClaudePermission()
+// 使用 composable 获取基础功能
+const { pendingRequests, sendAnswer: sendPermissionAnswer } = usePermissionTool(emit)
+
+// 过滤出 AskUserQuestion 类型的请求
+const questionRequest = computed(() => {
+  return pendingRequests.value.find((r) => r.toolName === 'AskUserQuestion') || null
+})
 
 // 是否有提问
 const hasQuestion = computed(() => {
-  let has = false
-  if (!claudePermissionMap.value.size) return false
-  claudePermissionMap.value.forEach((item) => {
-    // 没被取消
-    if (item.isCancel) {
-      has = false
-      return
-    }
-    // 并且是问题
-    if (item.toolName === 'AskUserQuestion') {
-      has = true
-    }
-  })
-  return has
+  return questionRequest.value !== null
 })
 
 // 交互式的提问
 const questions = computed(() => {
-  if (!hasQuestion.value) return []
-  let q
-  claudePermissionMap.value.forEach((item) => {
-    if (item.toolName === 'AskUserQuestion') {
-      q = item.input.questions || []
-    }
-  })
-  return q
+  if (!questionRequest.value) return []
+  return questionRequest.value.input?.questions || []
 })
 
-// 当前的请求
-const curRequest = computed(() => {
-  if (!hasQuestion.value) return null
-  let q: claudePermissionRequest
-  claudePermissionMap.value.forEach((item) => {
-    if (item.toolName === 'AskUserQuestion') {
-      q = item
-    }
-  })
-  return q
-})
-
+// 包装 sendAnswer 方法
 const sendAnswer = (allow: boolean = true) => {
-  emit('sendAnswer', {
-    type: 'claude-permission-response',
-    requestId: curRequest.value.requestId,
-    allow: allow ? 'allow' : 'deny',
-    updatedInput: collectUserAnswers(), // 传递用户选择的答案
-    // message: '',// 拒绝时的原因
-    // rememberEntry: ''  // 可选，记住这次选择的权限条目
+  if (!questionRequest.value) return
+  sendPermissionAnswer(questionRequest.value.requestId, allow, {
+    updatedInput: collectUserAnswers(),
   })
-  cancelPermission(curRequest.value)
 }
 
 const handleReject = () => {
@@ -115,7 +50,7 @@ const selectedOptions = ref<Record<number, number[]>>({})
 const handleOptionClick = (optionIndex: number | string) => {
   const index = typeof optionIndex === 'string' ? parseInt(optionIndex, 10) : optionIndex
   const questionIndex = activeTabIndex.value
-  const multiSelect = currentQuestion.value.multiSelect
+  const multiSelect = currentQuestion.value?.multiSelect
 
   if (multiSelect) {
     // 多选模式
@@ -149,7 +84,7 @@ const isOptionSelected = (optionIndex: number | string) => {
 const collectUserAnswers = () => {
   const answers: Record<string, string[]> = {}
 
-  questions.value.forEach((q, questionIndex) => {
+  questions.value.forEach((q: any, questionIndex: number) => {
     const selectedIndices = selectedOptions.value[questionIndex]
     if (selectedIndices && selectedIndices.length > 0) {
       // 使用问题的 header 作为 key，如果没有 header 则使用索引
@@ -166,6 +101,7 @@ const collectUserAnswers = () => {
 
 watch(hasQuestion, (val) => {
   if (val) {
+    activeTabIndex.value = 0
     selectedOptions.value = {}
   }
 })

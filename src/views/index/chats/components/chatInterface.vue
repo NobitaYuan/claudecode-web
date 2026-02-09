@@ -4,7 +4,6 @@ import { Project } from '../../types'
 import ClaudeLogo from './ClaudeLogo.vue'
 import { MessageResponse } from '@/components/ai-elements/message'
 import toolResult from './toolResult.vue'
-import questionSelecter from './questionSelecter.vue'
 import todoList from './todoList.vue'
 import editLinesDiff from './editLinesDiff.vue'
 import writLinesDiff from './writLinesDiff.vue'
@@ -365,12 +364,6 @@ const openImg = (img: string) => {
 
       <!-- 这里是消息内容容器 -->
       <div class="w-full">
-        <!-- ========================================================
-             NOTE:废弃：子分支 2.1: 这里是交互式提示渲染分支
-             ======================================================== -->
-        <!-- <template v-if="message.isInteractivePrompt">
-          <questionSelecter :message="message" />
-        </template> -->
         <!-- ========================================================
              子分支 2.2: 这里是工具调用渲染分支 (排除 Read/TodoWrite/TodoRead)
              ======================================================== -->

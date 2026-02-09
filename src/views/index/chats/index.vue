@@ -27,11 +27,8 @@ import { Message } from '../hooks/utils/message'
 import claudeModeSelector from './components/claudeModeSelector.vue'
 import { useLocalStorage } from '@vueuse/core'
 import { useClaudePermission } from '../hooks/useClaudePermission'
+import UnifiedPermissionDialog from './components/UnifiedPermissionDialog.vue'
 import permissionQuestion from './components/permissionQuestion.vue'
-import permissionDecision from './components/permissionDecision.vue'
-import permissionBash from './components/permissionBash.vue'
-import permissionWrite from './components/permissionWrite.vue'
-import permissionEdit from './components/permissionEdit.vue'
 
 const thinkingModes = [
   {
@@ -161,6 +158,9 @@ function addUserMessage(content: string) {
   // 发送消息后清空输入框和相关状态
   // ============================================================
   thinkingMode.value = null
+  setTimeout(() => {
+    scrollToBottom()
+  }, 500)
 }
 
 function handleSubmit(message: PromptInputMessage) {
@@ -228,10 +228,7 @@ defineExpose({
 
     <div class="grid shrink-0 gap-4 pt-4 relative">
       <permissionQuestion @sendAnswer="sendAnswer" />
-      <permissionDecision @sendAnswer="sendAnswer" />
-      <permissionBash @sendAnswer="sendAnswer" />
-      <permissionWrite @sendAnswer="sendAnswer" />
-      <permissionEdit @sendAnswer="sendAnswer" />
+      <UnifiedPermissionDialog @sendAnswer="sendAnswer" />
       <div class="status flex justify-between px-5" v-if="isLoading">
         <ThinkingMessage />
         <t-button variant="outline" theme="danger" @click="abortSession">停止对话</t-button>
