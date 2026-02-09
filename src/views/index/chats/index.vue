@@ -176,7 +176,7 @@ function handleSubmit(message: PromptInputMessage) {
 
 // 打断发送
 function abortSession() {
-  isLoading.value = true
+  isLoading.value = false
   sendMessage({
     type: 'abort-session',
     sessionId: selectedSession.value.id,
@@ -221,7 +221,7 @@ defineExpose({
         <template v-for="(msg, index) in convertedMessages" :key="msg?.uuid || index">
           <ChatInterface :message="msg" :prevMessage="index > 0 ? convertedMessages[index - 1] : null" :index="index" :createDiff="createDiff" />
         </template>
-        <t-empty clas="mt-[10vh]" v-if="!convertedMessages?.length" :title="'请输入内容以开始会话'"></t-empty>
+        <t-empty clas="mt-[10vh]" v-if="!convertedMessages?.length" :title="isLoading ? '建立会话中...' : '请输入内容以开始会话'"></t-empty>
       </ConversationContent>
       <ConversationScrollButton ref="ConversationScrollButtonRef" />
     </Conversation>

@@ -56,16 +56,17 @@ export function usePermissionTool(emit: (event: 'sendAnswer', data: any) => void
 
     const response: any = {
       type: 'claude-permission-response',
-      requestId: requestId,
-      allow: allow ? 'allow' : 'deny',
+      requestId,
+      allow,
     }
 
-    // 添加可选字段
-    if (options.message) {
-      response.message = options.message
-    }
-    if (options.updatedInput) {
+    if (allow && options.updatedInput) {
       response.updatedInput = options.updatedInput
+    }
+    // 添加可选字段
+    if (!allow) {
+      response.message = options.message || '用户拒绝！'
+      response.interrupt = true
     }
     if (options.rememberEntry) {
       response.rememberEntry = options.rememberEntry

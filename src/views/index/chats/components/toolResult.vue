@@ -42,7 +42,7 @@ withDefaults(defineProps<IProps>(), {
               </svg>
             </div>
             <span :class="['text-sm font-semibold', message.toolResult.isError ? 'text-red-800 dark:text-red-200' : 'text-green-800 dark:text-green-200']">
-              {{ message.toolResult.isError ? '工具调用错误' : '工具调用结果' }}
+              {{ message.toolResult.isError ? '工具调用失败' : '工具调用结果' }}
             </span>
           </div>
         </summary>

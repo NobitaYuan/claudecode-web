@@ -82,21 +82,22 @@ const isOptionSelected = (optionIndex: number | string) => {
 
 // 收集所有用户选择的答案
 const collectUserAnswers = () => {
-  const answers: Record<string, string[]> = {}
+  const answers: Record<string, string> = {}
 
   questions.value.forEach((q: any, questionIndex: number) => {
     const selectedIndices = selectedOptions.value[questionIndex]
     if (selectedIndices && selectedIndices.length > 0) {
-      // 使用问题的 header 作为 key，如果没有 header 则使用索引
-      const key = q.header || `question_${questionIndex}`
-      // 将选中的选项索引转换为选项的 label
-      answers[key] = selectedIndices.map((optionIndex) => {
-        return q.options[optionIndex]?.label || ''
-      })
+      // 使用问题的 question 文本作为 key
+      const question = q.question || `question_${questionIndex}`
+      // 将选中的选项索引转换为选项的 label，并用逗号+空格连接
+      answers[question] = selectedIndices.map((optionIndex) => q.options[optionIndex]?.label || '').join(', ')
     }
   })
 
-  return answers
+  return {
+    questions: questionRequest.value?.input?.questions,
+    answers,
+  }
 }
 
 watch(hasQuestion, (val) => {
