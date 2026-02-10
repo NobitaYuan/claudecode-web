@@ -65,7 +65,7 @@ export function usePermissionTool(emit: (event: 'sendAnswer', data: any) => void
     }
     // 添加可选字段
     if (!allow) {
-      response.message = options.message || '用户拒绝！'
+      response.message = options.message || '用户拒绝'
       response.interrupt = true
     }
     if (options.rememberEntry) {
